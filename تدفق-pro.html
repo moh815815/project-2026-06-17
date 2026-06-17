@@ -1,0 +1,2393 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تدفق PRO — منصة الأتمتة العربية</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-base: #0a0c10;
+  --bg-surface: #0f1217;
+  --bg-card: #141820;
+  --bg-hover: #1a2030;
+  --bg-active: #1e2638;
+  --border: #1e2638;
+  --border-light: #252d40;
+  --accent: #3b82f6;
+  --accent-glow: #3b82f630;
+  --accent-2: #8b5cf6;
+  --accent-3: #06b6d4;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --text-primary: #e8eaf0;
+  --text-secondary: #8892a4;
+  --text-muted: #4a5568;
+  --node-w: 220px;
+  --node-h: 70px;
+  --canvas-bg: #080a0e;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'IBM Plex Sans Arabic', sans-serif;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─── TOP BAR ─── */
+#topbar {
+  height: 52px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 12px;
+  flex-shrink: 0;
+  z-index: 100;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: -0.5px;
+  min-width: 100px;
+}
+.logo-icon {
+  width: 28px; height: 28px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+}
+
+.flow-name-input {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  width: 220px;
+  outline: none;
+  transition: border-color .2s;
+}
+.flow-name-input:focus { border-color: var(--accent); }
+
+.topbar-sep { width: 1px; height: 28px; background: var(--border); margin: 0 4px; }
+
+.tb-btn {
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex; align-items: center; gap: 6px;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.tb-btn:hover { background: var(--bg-hover); color: var(--text-primary); border-color: var(--border-light); }
+.tb-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+.tb-btn.primary:hover { background: #2563eb; }
+.tb-btn.success { background: var(--success); border-color: var(--success); color: #fff; font-weight: 600; }
+.tb-btn.success:hover { background: #059669; }
+.tb-btn.danger { background: transparent; border-color: var(--danger); color: var(--danger); }
+.tb-btn.danger:hover { background: var(--danger)22; }
+
+.run-status {
+  margin-right: auto;
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.run-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--text-muted);
+  transition: background .3s;
+}
+.run-dot.running { background: var(--warning); animation: pulse 1s infinite; }
+.run-dot.done { background: var(--success); }
+.run-dot.error { background: var(--danger); }
+
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+/* ─── MAIN LAYOUT ─── */
+#main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ─── LEFT SIDEBAR — NODE PANEL ─── */
+#sidebar {
+  width: 260px;
+  background: var(--bg-surface);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.sidebar-header {
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-title { font-size: 13px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .5px; }
+
+.search-box {
+  margin: 10px 16px;
+  position: relative;
+}
+.search-box input {
+  width: 100%;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: 7px 12px 7px 32px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+  transition: border-color .2s;
+}
+.search-box input:focus { border-color: var(--accent); }
+.search-box .s-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 13px; }
+
+#node-list { flex: 1; overflow-y: auto; padding: 8px; }
+#node-list::-webkit-scrollbar { width: 4px; }
+#node-list::-webkit-scrollbar-track { background: transparent; }
+#node-list::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 4px; }
+
+.node-category { margin-bottom: 4px; }
+.cat-header {
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: space-between;
+  border-radius: 6px;
+  transition: background .15s;
+  user-select: none;
+}
+.cat-header:hover { background: var(--bg-hover); }
+.cat-arrow { transition: transform .2s; font-size: 10px; }
+.cat-header.collapsed .cat-arrow { transform: rotate(-90deg); }
+
+.cat-items { overflow: hidden; }
+.cat-items.hidden { display: none; }
+
+.node-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: grab;
+  transition: background .15s;
+  user-select: none;
+  margin-bottom: 2px;
+}
+.node-item:hover { background: var(--bg-hover); }
+.node-item:active { cursor: grabbing; }
+
+.node-icon {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.node-item-info { flex: 1; min-width: 0; }
+.node-item-name { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+.node-item-desc { font-size: 11px; color: var(--text-muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ─── CANVAS ─── */
+#canvas-wrap {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: var(--canvas-bg);
+  background-image:
+    radial-gradient(circle at 1px 1px, #1e2638 1px, transparent 0);
+  background-size: 28px 28px;
+}
+
+#canvas {
+  position: absolute;
+  width: 4000px;
+  height: 3000px;
+  transform-origin: 0 0;
+}
+
+/* ─── SVG CONNECTIONS ─── */
+#svg-layer {
+  position: absolute;
+  top: 0; left: 0;
+  width: 4000px; height: 3000px;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.connection-path {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  opacity: .7;
+  transition: opacity .2s;
+}
+.connection-path:hover { opacity: 1; }
+.connection-path.selected { stroke: var(--accent-2); opacity: 1; }
+.connection-path.animated {
+  stroke-dasharray: 8 4;
+  animation: dash 1s linear infinite;
+}
+@keyframes dash { to { stroke-dashoffset: -12; } }
+
+.conn-arrow { fill: var(--accent); }
+
+/* ─── NODES ─── */
+.wf-node {
+  position: absolute;
+  width: var(--node-w);
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-light);
+  border-radius: 12px;
+  cursor: grab;
+  user-select: none;
+  transition: box-shadow .2s, border-color .2s;
+  z-index: 10;
+}
+.wf-node:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow), 0 8px 24px #0006;
+}
+.wf-node.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow), 0 8px 32px #0008;
+}
+.wf-node:active { cursor: grabbing; }
+.wf-node.running {
+  border-color: var(--warning);
+  box-shadow: 0 0 0 3px #f59e0b30;
+}
+.wf-node.success-run {
+  border-color: var(--success);
+  box-shadow: 0 0 0 3px #10b98130;
+}
+.wf-node.error-run {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px #ef444430;
+}
+
+.node-header {
+  padding: 10px 12px 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.node-header-icon {
+  width: 30px; height: 30px;
+  border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.node-header-text { flex: 1; min-width: 0; }
+.node-title { font-size: 13px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.node-type { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
+
+.node-body { padding: 8px 12px 10px; }
+.node-status { font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
+.node-status .ns-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-muted); }
+.node-status.ok .ns-dot { background: var(--success); }
+.node-status.err .ns-dot { background: var(--danger); }
+.node-status.run .ns-dot { background: var(--warning); animation: pulse 1s infinite; }
+
+/* ports */
+.port {
+  position: absolute;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  border: 2px solid var(--border-light);
+  cursor: crosshair;
+  transition: all .15s;
+  z-index: 20;
+}
+.port:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  transform: scale(1.4);
+}
+.port.input-port { right: -6px; top: 50%; transform: translateY(-50%); }
+.port.output-port { left: -6px; top: 50%; transform: translateY(-50%); }
+.port.input-port:hover { transform: translateY(-50%) scale(1.4); }
+.port.output-port:hover { transform: translateY(-50%) scale(1.4); }
+.port.connected { border-color: var(--accent); background: var(--accent); }
+
+.node-actions {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: none;
+  gap: 4px;
+  z-index: 30;
+}
+.wf-node:hover .node-actions { display: flex; }
+.na-btn {
+  width: 22px; height: 22px;
+  border-radius: 5px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px;
+  transition: all .15s;
+}
+.na-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+.na-btn.del:hover { background: var(--danger); border-color: var(--danger); }
+
+/* ─── MINIMAP ─── */
+#minimap {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  width: 180px;
+  height: 110px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  z-index: 50;
+}
+#minimap canvas { display: block; }
+.minimap-label {
+  position: absolute;
+  bottom: 4px;
+  right: 6px;
+  font-size: 9px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+/* ─── ZOOM CONTROLS ─── */
+#zoom-controls {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 50;
+}
+.zoom-btn {
+  width: 34px; height: 34px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .15s;
+}
+.zoom-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+.zoom-label {
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ─── RIGHT PANEL — PROPERTIES ─── */
+#props-panel {
+  width: 300px;
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex-shrink: 0;
+  transform: translateX(100%);
+  transition: transform .25s cubic-bezier(.4,0,.2,1);
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 60;
+}
+#props-panel.open { transform: translateX(0); }
+
+.panel-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.panel-title { font-size: 14px; font-weight: 600; }
+.panel-close {
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  transition: all .15s;
+}
+.panel-close:hover { background: var(--danger)22; color: var(--danger); border-color: var(--danger); }
+
+.panel-body { flex: 1; overflow-y: auto; padding: 16px; }
+.panel-body::-webkit-scrollbar { width: 4px; }
+.panel-body::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 4px; }
+
+.prop-group { margin-bottom: 20px; }
+.prop-group-title { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px; }
+
+.prop-field { margin-bottom: 12px; }
+.prop-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 5px; display: block; }
+.prop-input, .prop-select, .prop-textarea {
+  width: 100%;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+  transition: border-color .2s;
+}
+.prop-input:focus, .prop-select:focus, .prop-textarea:focus { border-color: var(--accent); }
+.prop-textarea { resize: vertical; min-height: 80px; }
+.prop-select { appearance: none; cursor: pointer; }
+
+.prop-row { display: flex; gap: 8px; }
+.prop-row .prop-field { flex: 1; }
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+}
+.toggle-label { font-size: 13px; color: var(--text-primary); }
+.toggle {
+  width: 38px; height: 22px;
+  background: var(--border);
+  border-radius: 11px;
+  position: relative;
+  cursor: pointer;
+  transition: background .2s;
+  flex-shrink: 0;
+}
+.toggle.on { background: var(--accent); }
+.toggle::after {
+  content: '';
+  position: absolute;
+  width: 16px; height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  top: 3px; right: 3px;
+  transition: transform .2s;
+}
+.toggle.on::after { transform: translateX(-16px); }
+
+.code-editor {
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: #a5d6ff;
+  min-height: 120px;
+  resize: vertical;
+  outline: none;
+  width: 100%;
+  transition: border-color .2s;
+}
+.code-editor:focus { border-color: var(--accent); }
+
+.test-btn {
+  width: 100%;
+  padding: 10px;
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s;
+  margin-top: 4px;
+}
+.test-btn:hover { background: #2563eb; }
+.test-btn.secondary { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-secondary); }
+.test-btn.secondary:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+/* ─── LOGS PANEL ─── */
+#logs-panel {
+  height: 200px;
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  transform: translateY(100%);
+  transition: transform .25s;
+}
+#logs-panel.open { transform: translateY(0); }
+
+.logs-header {
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.logs-title { font-size: 12px; font-weight: 600; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
+.log-count { background: var(--accent); color: #fff; font-size: 10px; padding: 1px 6px; border-radius: 10px; }
+
+.logs-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+}
+.logs-body::-webkit-scrollbar { width: 4px; }
+.logs-body::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 4px; }
+
+.log-entry {
+  display: flex;
+  gap: 10px;
+  padding: 3px 0;
+  border-bottom: 1px solid var(--border)44;
+  align-items: flex-start;
+}
+.log-time { color: var(--text-muted); flex-shrink: 0; font-size: 11px; }
+.log-level { font-size: 11px; padding: 0 5px; border-radius: 3px; flex-shrink: 0; }
+.log-level.info { background: #3b82f622; color: var(--accent); }
+.log-level.success { background: #10b98122; color: var(--success); }
+.log-level.error { background: #ef444422; color: var(--danger); }
+.log-level.warn { background: #f59e0b22; color: var(--warning); }
+.log-msg { color: var(--text-primary); flex: 1; font-size: 11px; line-height: 1.5; }
+
+/* ─── CONTEXT MENU ─── */
+#ctx-menu {
+  position: fixed;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: 10px;
+  padding: 6px;
+  z-index: 1000;
+  min-width: 180px;
+  box-shadow: 0 8px 32px #0008;
+  display: none;
+}
+.ctx-item {
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-primary);
+  transition: background .1s;
+}
+.ctx-item:hover { background: var(--bg-hover); }
+.ctx-item.danger { color: var(--danger); }
+.ctx-item.danger:hover { background: var(--danger)22; }
+.ctx-sep { height: 1px; background: var(--border); margin: 4px 0; }
+
+/* ─── TOAST ─── */
+#toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 13px;
+  color: var(--text-primary);
+  z-index: 2000;
+  transition: transform .3s cubic-bezier(.4,0,.2,1);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 8px 24px #0006;
+  pointer-events: none;
+}
+#toast.show { transform: translateX(-50%) translateY(0); }
+#toast.t-success { border-color: var(--success); }
+#toast.t-error { border-color: var(--danger); }
+
+/* ─── MODAL ─── */
+#modal-overlay {
+  position: fixed; inset: 0;
+  background: #00000088;
+  backdrop-filter: blur(4px);
+  z-index: 500;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+#modal-overlay.show { display: flex; }
+.modal-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: 16px;
+  width: 480px;
+  max-width: 95vw;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 24px 64px #000a;
+}
+.modal-head {
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.modal-title { font-size: 16px; font-weight: 600; }
+.modal-body { padding: 20px; overflow-y: auto; flex: 1; }
+.modal-foot {
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* ─── FLOWS SIDEBAR ─── */
+#flows-sidebar {
+  width: 220px;
+  background: var(--bg-surface);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex-shrink: 0;
+  transition: width .25s;
+}
+#flows-sidebar.collapsed { width: 0; border: none; }
+
+.fs-header {
+  padding: 14px 14px 10px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.fs-title { font-size: 12px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .5px; }
+
+.flow-list { flex: 1; overflow-y: auto; padding: 8px; }
+.flow-item {
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background .15s;
+  margin-bottom: 3px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.flow-item:hover { background: var(--bg-hover); }
+.flow-item.active { background: var(--bg-active); border-left: 2px solid var(--accent); padding-right: 8px; }
+.flow-item-icon { font-size: 14px; }
+.flow-item-info { flex: 1; min-width: 0; }
+.flow-item-name { font-size: 13px; font-weight: 500; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.flow-item-meta { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+.flow-badge { font-size: 10px; padding: 1px 6px; border-radius: 4px; flex-shrink: 0; }
+.flow-badge.active { background: #10b98120; color: var(--success); border: 1px solid #10b98140; }
+.flow-badge.paused { background: #f59e0b20; color: var(--warning); border: 1px solid #f59e0b40; }
+
+.new-flow-btn {
+  margin: 10px;
+  padding: 8px;
+  background: var(--bg-card);
+  border: 1px dashed var(--border-light);
+  border-radius: 8px;
+  color: var(--text-muted);
+  cursor: pointer;
+  text-align: center;
+  font-size: 13px;
+  transition: all .15s;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.new-flow-btn:hover { background: var(--bg-hover); color: var(--text-primary); border-color: var(--accent); }
+
+/* ─── DRAG GHOST ─── */
+#drag-ghost {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  background: var(--bg-card);
+  border: 1.5px solid var(--accent);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 13px;
+  display: none;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 8px 24px #0008;
+  opacity: .9;
+}
+
+/* ─── CANVAS EMPTY STATE ─── */
+#canvas-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: .5;
+  gap: 12px;
+}
+#canvas-empty.hidden { display: none; }
+.empty-icon { font-size: 48px; }
+.empty-text { font-size: 16px; color: var(--text-muted); text-align: center; line-height: 1.6; }
+
+/* ─── CONNECTING LINE ─── */
+#temp-line {
+  position: absolute;
+  top: 0; left: 0;
+  pointer-events: none;
+  overflow: visible;
+  z-index: 40;
+}
+
+/* ─── SELECTION BOX ─── */
+#sel-box {
+  position: absolute;
+  border: 1.5px dashed var(--accent);
+  background: var(--accent-glow);
+  pointer-events: none;
+  z-index: 5;
+  display: none;
+  border-radius: 4px;
+}
+
+/* Scrollbar global */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 4px; }
+
+/* Responsive */
+@media (max-width: 900px) {
+  #flows-sidebar { display: none; }
+  #sidebar { width: 220px; }
+}
+@media (max-width: 640px) {
+  #sidebar { display: none; }
+  #topbar { padding: 0 8px; gap: 6px; }
+}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div id="topbar">
+  <div class="logo">
+    <div class="logo-icon">⚡</div>
+    تدفق
+  </div>
+  <div class="topbar-sep"></div>
+  <input class="flow-name-input" id="flow-name" value="سير عمل جديد" />
+  <div class="topbar-sep"></div>
+  <button class="tb-btn" onclick="showFlowsSidebar()" title="الأتمتة">📋 الأتمتة</button>
+  <button class="tb-btn" onclick="saveFlow()">💾 حفظ</button>
+  <button class="tb-btn" onclick="clearCanvas()">🗑 مسح</button>
+  <button class="tb-btn" onclick="importFlow()">📥 استيراد</button>
+  <button class="tb-btn" onclick="exportFlow()">📤 تصدير</button>
+  <div class="topbar-sep"></div>
+  <div class="run-status">
+    <div class="run-dot" id="run-dot"></div>
+    <span id="run-status-text">جاهز</span>
+  </div>
+  <button class="tb-btn" onclick="toggleLogs()">📊 السجلات</button>
+  <button class="tb-btn success" onclick="runFlow()">▶ تشغيل</button>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+
+  <!-- LEFT: FLOWS LIST -->
+  <div id="flows-sidebar">
+    <div class="fs-header">
+      <span class="fs-title">الأتمتة</span>
+      <button class="tb-btn" onclick="document.getElementById('flows-sidebar').classList.toggle('collapsed')" style="padding:0 6px;height:26px;font-size:12px;">✕</button>
+    </div>
+    <div class="flow-list" id="flow-list"></div>
+    <button class="new-flow-btn" onclick="newFlow()">＋ أتمتة جديدة</button>
+  </div>
+
+  <!-- CENTER: CANVAS -->
+  <div id="canvas-wrap" oncontextmenu="showCtxMenu(event)"
+       ondragover="e=>e.preventDefault()"
+       ondrop="handleCanvasDrop(event)">
+    <div id="canvas">
+      <svg id="svg-layer" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="var(--accent)" />
+          </marker>
+          <marker id="arr-sel" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="var(--accent-2)" />
+          </marker>
+        </defs>
+      </svg>
+      <svg id="temp-line" width="4000" height="3000">
+        <path id="temp-path" fill="none" stroke="var(--accent)" stroke-width="2" stroke-dasharray="6 3" d="" opacity=".7"/>
+      </svg>
+      <div id="sel-box"></div>
+    </div>
+    <div id="canvas-empty">
+      <div class="empty-icon">⚡</div>
+      <div class="empty-text">اسحب نودات من الشريط الجانبي<br>وابدأ في بناء الأتمتة</div>
+    </div>
+    <!-- ZOOM -->
+    <div id="zoom-controls">
+      <button class="zoom-btn" onclick="zoom(1.15)" title="تكبير">+</button>
+      <div class="zoom-label" id="zoom-label">100%</div>
+      <button class="zoom-btn" onclick="zoom(0.87)" title="تصغير">−</button>
+      <button class="zoom-btn" onclick="resetView()" title="إعادة ضبط" style="font-size:13px">⊙</button>
+    </div>
+    <!-- MINIMAP -->
+    <div id="minimap">
+      <canvas id="minimap-canvas" width="180" height="110"></canvas>
+      <div class="minimap-label">خريطة</div>
+    </div>
+  </div>
+
+  <!-- RIGHT: NODE PANEL -->
+  <div id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-title">العُقد</div>
+    </div>
+    <div class="search-box">
+      <span class="s-icon">🔍</span>
+      <input type="text" placeholder="بحث في العُقد..." oninput="filterNodes(this.value)" />
+    </div>
+    <div id="node-list"></div>
+  </div>
+
+</div>
+
+<!-- LOGS PANEL -->
+<div id="logs-panel">
+  <div class="logs-header">
+    <div class="logs-title">📊 سجلات التنفيذ <span class="log-count" id="log-count">0</span></div>
+    <div style="display:flex;gap:6px">
+      <button class="tb-btn" onclick="clearLogs()" style="height:26px;padding:0 10px;font-size:12px;">مسح</button>
+      <button class="tb-btn" onclick="toggleLogs()" style="height:26px;padding:0 10px;font-size:12px;">إغلاق</button>
+    </div>
+  </div>
+  <div class="logs-body" id="logs-body"></div>
+</div>
+
+<!-- RIGHT: PROPERTIES PANEL -->
+<div id="props-panel">
+  <div class="panel-header">
+    <div class="panel-title" id="props-title">إعدادات العقدة</div>
+    <button class="panel-close" onclick="closeProps()">✕</button>
+  </div>
+  <div class="panel-body" id="props-body"></div>
+</div>
+
+<!-- DRAG GHOST -->
+<div id="drag-ghost" id="drag-ghost">
+  <span id="ghost-icon"></span>
+  <span id="ghost-name"></span>
+</div>
+
+<!-- CONTEXT MENU -->
+<div id="ctx-menu">
+  <div class="ctx-item" id="ctx-paste" onclick="ctxPaste()">📋 لصق</div>
+  <div class="ctx-item" onclick="selectAll()">⬜ تحديد الكل</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item" onclick="autoLayout()">📐 ترتيب تلقائي</div>
+  <div class="ctx-item" onclick="resetView()">🎯 إعادة المشاهدة</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item danger" onclick="clearCanvas()">🗑 مسح الكل</div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- MODAL -->
+<div id="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div class="modal-title" id="modal-title">تأكيد</div>
+      <button class="panel-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-foot" id="modal-foot"></div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════
+//  تدفق PRO — منصة الأتمتة العربية
+//  Engine v3.0
+// ════════════════════════════════════════════════
+
+// ─── NODE DEFINITIONS ───────────────────────────
+const NODE_DEFS = {
+  // TRIGGERS
+  webhook: {
+    cat: 'مشغلات', name: 'Webhook', icon: '🔗',
+    color: '#3b82f6', colorBg: '#3b82f615',
+    desc: 'استقبال HTTP طلبات',
+    inputs: 0, outputs: 1,
+    fields: [
+      { key: 'path', label: 'المسار', type: 'text', default: '/webhook' },
+      { key: 'method', label: 'الطريقة', type: 'select', options: ['GET','POST','PUT','DELETE'], default: 'POST' },
+      { key: 'auth', label: 'المصادقة', type: 'select', options: ['بدون','API Key','Bearer Token'], default: 'بدون' },
+    ]
+  },
+  schedule: {
+    cat: 'مشغلات', name: 'جدول زمني', icon: '⏰',
+    color: '#8b5cf6', colorBg: '#8b5cf615',
+    desc: 'تشغيل بجدول زمني',
+    inputs: 0, outputs: 1,
+    fields: [
+      { key: 'cron', label: 'CRON Expression', type: 'text', default: '0 9 * * *' },
+      { key: 'tz', label: 'المنطقة الزمنية', type: 'select', options: ['Asia/Riyadh','Africa/Cairo','Asia/Dubai','Europe/London','UTC'], default: 'Africa/Cairo' },
+    ]
+  },
+  form_trigger: {
+    cat: 'مشغلات', name: 'استجابة نموذج', icon: '📝',
+    color: '#06b6d4', colorBg: '#06b6d415',
+    desc: 'تشغيل عند إرسال نموذج',
+    inputs: 0, outputs: 1,
+    fields: [
+      { key: 'form_id', label: 'معرف النموذج', type: 'text', default: 'form-001' },
+    ]
+  },
+  email_trigger: {
+    cat: 'مشغلات', name: 'استقبال بريد', icon: '📨',
+    color: '#ec4899', colorBg: '#ec489915',
+    desc: 'تشغيل عند وصول بريد',
+    inputs: 0, outputs: 1,
+    fields: [
+      { key: 'email', label: 'البريد الإلكتروني', type: 'text', default: '' },
+      { key: 'folder', label: 'المجلد', type: 'text', default: 'Inbox' },
+      { key: 'filter', label: 'فلتر الموضوع', type: 'text', default: '' },
+    ]
+  },
+
+  // ACTIONS
+  http: {
+    cat: 'إجراءات', name: 'HTTP Request', icon: '🌐',
+    color: '#10b981', colorBg: '#10b98115',
+    desc: 'إرسال HTTP طلب',
+    inputs: 1, outputs: 1,
+    fields: [
+      { key: 'url', label: 'الرابط', type: 'text', default: 'https://api.example.com' },
+      { key: 'method', label: 'الطريقة', type: 'select', options: ['GET','POST','PUT','PATCH','DELETE'], default: 'POST' },
+      { key: 'headers', label: 'الرؤوس (JSON)', type: 'textarea', default: '{"Content-Type":"application/json"}' },
+      { key: 'body', label: 'البيانات (JSON)', type: 'textarea', default: '{}' },
+      { key: 'timeout', label: 'المهلة (ثانية)', type: 'number', default: '30' },
+    ]
+  },
+  code: {
+    cat: 'إجراءات', name: 'كود JavaScript', icon: '💻',
+    color: '#f59e0b', colorBg: '#f59e0b15',
+    desc: 'تشغيل كود مخصص',
+    inputs: 1, outputs: 1,
+    fields: [
+      { key: 'code', label: 'الكود', type: 'code', default: '// البيانات متاحة في متغير data\n// أعد return للبيانات الجديدة\nreturn data;' },
+      { key: 'timeout', label: 'المهلة (ثانية)', type: 'number', default: '10' },
+    ]
+  },
+  delay: {
+    cat: 'إجراءات', name: 'تأخير', icon: '⏳',
+    color: '#6366f1', colorBg: '#6366f115',
+    desc: 'تأخير في التنفيذ',
+    inputs: 1, outputs: 1,
+    fields: [
+      { key: 'amount', label: 'المدة', type: 'number', default: '5' },
+      { key: 'unit', label: 'الوحدة', type: 'select', options: ['ثانية','دقيقة','ساعة','يوم'], default: 'ثانية' },
+    ]
+  },
+  set_variable: {
+    cat: 'إجراءات', name: 'تعيين متغير', icon: '📌',
+    color: '#14b8a6', colorBg: '#14b8a615',
+    desc: 'تعيين أو تعديل متغير',
+    inputs: 1, outputs: 1,
+    fields: [
+      { key: 'var_name', label: 'اسم المتغير', type: 'text', default: 'myVar' },
+      { key: 'var_value', label: 'القيمة', type: 'text', default: '{{data.field}}' },
+      { key: 'mode', label: 'الوضع', type: 'select', options: ['استبدال','إضافة','حذف'], default: 'استبدال' },
+    ]
+  },
+
+  // CONDITIONS
+  if_condition: {
+    cat: 'منطق', name: 'شرط IF', icon: '🔀',
+    color: '#f97316', colorBg: '#f9731615',
+    desc: 'تفرع حسب شرط',
+    inputs: 1, outputs: 2,
+    outputLabels: ['نعم ✓', 'لا ✗'],
+    fields: [
+      { key: 'field', label: 'الحقل', type: 'text', default: '{{data.status}}' },
+      { key: 'operator', label: 'المعامل', type: 'select', options: ['يساوي','لا يساوي','يحتوي','لا يحتوي','أكبر من','أصغر من','موجود','غير موجود'], default: 'يساوي' },
+      { key: 'value', label: 'القيمة', type: 'text', default: 'success' },
+    ]
+  },
+  switch: {
+    cat: 'منطق', name: 'Switch', icon: '⚡',
+    color: '#a855f7', colorBg: '#a855f715',
+    desc: 'توجيه متعدد المخرجات',
+    inputs: 1, outputs: 3,
+    outputLabels: ['حالة 1', 'حالة 2', 'افتراضي'],
+    fields: [
+      { key: 'field', label: 'الحقل', type: 'text', default: '{{data.type}}' },
+      { key: 'case1', label: 'حالة 1', type: 'text', default: 'typeA' },
+      { key: 'case2', label: 'حالة 2', type: 'text', default: 'typeB' },
+    ]
+  },
+  loop: {
+    cat: 'منطق', name: 'حلقة تكرار', icon: '🔄',
+    color: '#0ea5e9', colorBg: '#0ea5e915',
+    desc: 'تكرار على قائمة',
+    inputs: 1, outputs: 2,
+    outputLabels: ['عنصر', 'انتهى'],
+    fields: [
+      { key: 'items', label: 'المصدر', type: 'text', default: '{{data.items}}' },
+      { key: 'batch', label: 'حجم الدفعة', type: 'number', default: '1' },
+    ]
+  },
+  merge: {
+    cat: 'منطق', name: 'دمج', icon: '🔗',
+    color: '#84cc16', colorBg: '#84cc1615',
+    desc: 'دمج مسارات متعددة',
+    inputs: 2, outputs: 1,
+    fields: [
+      { key: 'mode', label: 'وضع الدمج', type: 'select', options: ['كلا المسارين','الأول فقط','الأخير فقط','دمج البيانات'], default: 'دمج البيانات' },
+    ]
+  },
+
+  // COMMUNICATION
+  email_send: {
+    cat: 'تواصل', name: 'إرسال بريد', icon: '📧',
+    color: '#ec4899', colorBg: '#ec489915',
+    desc: 'إرسال بريد إلكتروني',
+    inputs: 1, outputs: 1,
+    fields: [
+      { key: 'to', label: 'إلى', type: 'text', default: '{{data.email}}' },
+      { key: 'subject', label: 'الموضوع', type: 'text', default: 'رسالة من تدفق' },
+      { key: 'body', label: 'المحتوى', type: 'textarea', default: 'مرحباً،\n\n{{data.message}}' },
+      { key: 'html', label: 'HTML', type: 'toggle', default: false },
+    ]
+  },
+  whatsapp: {
+    cat: 'تواصل', name: 'WhatsApp', icon: '💬',
+    color: '#25d366', colorBg: '#25d36615',
+    desc: 'إرسال رسالة واتساب',
+    inputs: 1, outputs: 1,
+    fields: [
+      { key: 'phone', label: 'رقم الهاتف', type: 'text', default: '+966500000000' },
+      { key: 'message', label: 'الرسالة', type: 'textarea', default: 'مرحباً {{data.name}}!' },
+      { key: 'template', label: 'قالب', type: 'text', default: '' },
+    ]
+  },
+  telegram: {
+    cat: 'تواصل', name: 'Telegram', icon: '✈️',
+    color: '#0088cc', colorBg: '#0088cc15',
+    desc: 'إرسال رسالة تيليجرام',
+    inputs: 1, outputs: 1,
+    fields: [
+      { key: 'bot_token', label: 'Bot Token', type: 'text', default: '' },
+      { key: 'chat_id', label: 'Chat ID', type: 'text', default: '' },
+      { key: 'message', label: 'الرسالة', type: 'textarea', default: '{{data.message}}' },
+    ]
+  },
+  slack: {
+    cat: 'تواصل', name: 'Slack', icon: '🔔',
+    color: '#611f69', colorBg: '#611f6915',
+    desc: 'إرسال رسالة Slack',
+    inputs: 1, outputs: 1,
+    fields: [
+      { key: 'webhook_url', label: 'Webhook URL', type: 'text', default: '' },
+      { key: 'channel', label: 'القناة', type: 'text', default: '#general' },
+      { key: 'message', label: 'الرسالة', type: 'textarea', default: '{{data.message}}' },
+    ]
+  },
+  sms: {
+    cat: 'تواصل', name: 'SMS', icon: '📱',
+    color: '#f43f5e', colorBg: '#f43f5e15',
+    desc: 'إرسال رسالة SMS',
+    inputs: 1, outputs: 1,
+    fields: [
+      { key: 'provider', label: 'المزود', type: 'select', options: ['Twilio','Unifonic','جوابك','Infobip'], default: 'Unifonic' },
+      { key: 'to', label: 'المستقبل', type: 'text', default: '{{data.phone}}' },
+      { key: 'message', label: 'الرسالة', type: 'text', default: 'رمز التحقق: {{data.otp}}' },
+    ]
+  },
+
+  // DATA
+  database: {
+    cat: 'بيانات', name: 'قاعدة بيانات', icon: '🗄️',
+    color: '#06b6d4', colorBg: '#06b6d415',
+    desc: 'استعلام SQL',
+    inputs: 1, outputs: 1,
+    fields: [
+      { key: 'conn', label: 'الاتصال', type: 'text', default: 'mysql://localhost/db' },
+      { key: 'query', label: 'الاستعلام', type: 'code', default: 'SELECT * FROM orders WHERE status = :status' },
+      { key: 'params', label: 'المعاملات', type: 'text', default: '{"status":"{{data.status}}"}' },
+    ]
+  },
+  spreadsheet: {
+    cat: 'بيانات', name: 'جداول بيانات', icon: '📊',
+    color: '#22c55e', colorBg: '#22c55e15',
+    desc: 'Google Sheets / Excel',
+    inputs: 1, outputs: 1,
+    fields: [
+      { key: 'sheet_id', label: 'معرف الجدول', type: 'text', default: '' },
+      { key: 'sheet_name', label: 'اسم الورقة', type: 'text', default: 'Sheet1' },
+      { key: 'action', label: 'الإجراء', type: 'select', options: ['قراءة','إضافة صف','تحديث صف','حذف صف'], default: 'إضافة صف' },
+      { key: 'data', label: 'البيانات', type: 'textarea', default: '{"col1":"{{data.value}}"}' },
+    ]
+  },
+  transform: {
+    cat: 'بيانات', name: 'تحويل بيانات', icon: '🔧',
+    color: '#a78bfa', colorBg: '#a78bfa15',
+    desc: 'تحويل وتنسيق البيانات',
+    inputs: 1, outputs: 1,
+    fields: [
+      { key: 'operation', label: 'العملية', type: 'select', options: ['خريطة حقول','فلترة','ترتيب','تجميع','إزالة مكررات'], default: 'خريطة حقول' },
+      { key: 'mapping', label: 'التعيين (JSON)', type: 'textarea', default: '{"output_field":"{{data.input_field}}"}' },
+    ]
+  },
+  filter: {
+    cat: 'بيانات', name: 'فلتر', icon: '🔍',
+    color: '#fb923c', colorBg: '#fb923c15',
+    desc: 'فلترة وتصفية البيانات',
+    inputs: 1, outputs: 2,
+    outputLabels: ['مقبول', 'مرفوض'],
+    fields: [
+      { key: 'field', label: 'الحقل', type: 'text', default: '{{data.amount}}' },
+      { key: 'operator', label: 'المعامل', type: 'select', options: ['أكبر من','أصغر من','يساوي','يحتوي'], default: 'أكبر من' },
+      { key: 'value', label: 'القيمة', type: 'text', default: '100' },
+    ]
+  },
+
+  // AI
+  ai_claude: {
+    cat: 'ذكاء اصطناعي', name: 'Claude AI', icon: '🤖',
+    color: '#c084fc', colorBg: '#c084fc15',
+    desc: 'معالجة بـ Claude AI',
+    inputs: 1, outputs: 1,
+    fields: [
+      { key: 'model', label: 'النموذج', type: 'select', options: ['claude-sonnet-4-20250514','claude-haiku-4-5-20251001'], default: 'claude-sonnet-4-20250514' },
+      { key: 'prompt', label: 'الموجه', type: 'textarea', default: 'حلل البيانات التالية وأعطني ملخصاً:\n{{data.text}}' },
+      { key: 'max_tokens', label: 'أقصى رموز', type: 'number', default: '1000' },
+    ]
+  },
+  ai_classify: {
+    cat: 'ذكاء اصطناعي', name: 'تصنيف ذكي', icon: '🏷️',
+    color: '#e879f9', colorBg: '#e879f915',
+    desc: 'تصنيف النصوص تلقائياً',
+    inputs: 1, outputs: 1,
+    fields: [
+      { key: 'text', label: 'النص', type: 'text', default: '{{data.message}}' },
+      { key: 'categories', label: 'التصنيفات', type: 'text', default: 'إيجابي,سلبي,محايد' },
+    ]
+  },
+  ai_extract: {
+    cat: 'ذكاء اصطناعي', name: 'استخراج بيانات', icon: '📤',
+    color: '#67e8f9', colorBg: '#67e8f915',
+    desc: 'استخراج بيانات من نص',
+    inputs: 1, outputs: 1,
+    fields: [
+      { key: 'text', label: 'النص', type: 'text', default: '{{data.raw_text}}' },
+      { key: 'schema', label: 'المخطط (JSON)', type: 'textarea', default: '{"name":"string","phone":"string","email":"string"}' },
+    ]
+  },
+
+  // INTEGRATIONS
+  crm: {
+    cat: 'تكاملات', name: 'CRM', icon: '👥',
+    color: '#f59e0b', colorBg: '#f59e0b15',
+    desc: 'تكامل مع CRM',
+    inputs: 1, outputs: 1,
+    fields: [
+      { key: 'provider', label: 'المزود', type: 'select', options: ['HubSpot','Salesforce','Zoho CRM','Pipedrive','Odoo'], default: 'HubSpot' },
+      { key: 'action', label: 'الإجراء', type: 'select', options: ['إضافة عميل','تحديث عميل','إضافة صفقة','جلب عميل'], default: 'إضافة عميل' },
+      { key: 'data', label: 'البيانات', type: 'textarea', default: '{"email":"{{data.email}}","name":"{{data.name}}"}' },
+    ]
+  },
+  payment: {
+    cat: 'تكاملات', name: 'بوابة دفع', icon: '💳',
+    color: '#34d399', colorBg: '#34d39915',
+    desc: 'معالجة المدفوعات',
+    inputs: 1, outputs: 2,
+    outputLabels: ['نجح', 'فشل'],
+    fields: [
+      { key: 'provider', label: 'البوابة', type: 'select', options: ['Stripe','PayTabs','HyperPay','Moyasar','PayPal'], default: 'Moyasar' },
+      { key: 'amount', label: 'المبلغ', type: 'text', default: '{{data.amount}}' },
+      { key: 'currency', label: 'العملة', type: 'select', options: ['SAR','EGP','AED','USD','EUR'], default: 'SAR' },
+    ]
+  },
+  erp: {
+    cat: 'تكاملات', name: 'ERP', icon: '🏢',
+    color: '#64748b', colorBg: '#64748b15',
+    desc: 'تكامل مع ERP',
+    inputs: 1, outputs: 1,
+    fields: [
+      { key: 'provider', label: 'المزود', type: 'select', options: ['SAP','Oracle','Odoo','Microsoft Dynamics','ERPNext'], default: 'Odoo' },
+      { key: 'module', label: 'الوحدة', type: 'select', options: ['مبيعات','مشتريات','محاسبة','مخزون','موارد بشرية'], default: 'مبيعات' },
+      { key: 'action', label: 'الإجراء', type: 'text', default: 'create_invoice' },
+    ]
+  },
+  storage: {
+    cat: 'تكاملات', name: 'التخزين', icon: '☁️',
+    color: '#38bdf8', colorBg: '#38bdf815',
+    desc: 'رفع ملفات للسحابة',
+    inputs: 1, outputs: 1,
+    fields: [
+      { key: 'provider', label: 'المزود', type: 'select', options: ['AWS S3','Google Drive','Dropbox','OneDrive','FTP'], default: 'AWS S3' },
+      { key: 'bucket', label: 'المستودع', type: 'text', default: 'my-bucket' },
+      { key: 'path', label: 'المسار', type: 'text', default: '/uploads/{{data.filename}}' },
+      { key: 'action', label: 'الإجراء', type: 'select', options: ['رفع','تحميل','حذف','قائمة'], default: 'رفع' },
+    ]
+  },
+
+  // OUTPUT
+  response: {
+    cat: 'إخراج', name: 'HTTP Response', icon: '📡',
+    color: '#10b981', colorBg: '#10b98115',
+    desc: 'إرسال رد HTTP',
+    inputs: 1, outputs: 0,
+    fields: [
+      { key: 'status', label: 'كود الحالة', type: 'number', default: '200' },
+      { key: 'body', label: 'البيانات', type: 'textarea', default: '{"success":true,"data":"{{data}}"}' },
+      { key: 'headers', label: 'الرؤوس', type: 'textarea', default: '{"Content-Type":"application/json"}' },
+    ]
+  },
+  log_output: {
+    cat: 'إخراج', name: 'سجل', icon: '📝',
+    color: '#94a3b8', colorBg: '#94a3b815',
+    desc: 'تسجيل بيانات للمراقبة',
+    inputs: 1, outputs: 1,
+    fields: [
+      { key: 'level', label: 'المستوى', type: 'select', options: ['info','success','warning','error'], default: 'info' },
+      { key: 'message', label: 'الرسالة', type: 'text', default: 'تم التنفيذ: {{data.id}}' },
+    ]
+  },
+  notify: {
+    cat: 'إخراج', name: 'إشعار داخلي', icon: '🔔',
+    color: '#fb7185', colorBg: '#fb718515',
+    desc: 'إرسال إشعار للمستخدمين',
+    inputs: 1, outputs: 0,
+    fields: [
+      { key: 'to', label: 'إلى', type: 'text', default: 'admin' },
+      { key: 'title', label: 'العنوان', type: 'text', default: 'تنبيه جديد' },
+      { key: 'body', label: 'المحتوى', type: 'textarea', default: '{{data.message}}' },
+      { key: 'priority', label: 'الأولوية', type: 'select', options: ['عادي','مهم','عاجل'], default: 'عادي' },
+    ]
+  },
+};
+
+// ─── STATE ────────────────────────────────────────
+let state = {
+  nodes: {},
+  connections: [],
+  flows: [
+    { id: 'f1', name: 'أتمتة العملاء الجدد', nodes: {}, connections: [], active: true },
+    { id: 'f2', name: 'تنبيهات المبيعات', nodes: {}, connections: [], active: false },
+    { id: 'f3', name: 'معالجة الطلبات', nodes: {}, connections: [], active: true },
+  ],
+  currentFlow: null,
+  selectedNodes: new Set(),
+  selectedConn: null,
+  canvas: { x: 80, y: 60, scale: 1 },
+  nodeIdCounter: 1,
+  connecting: null, // { nodeId, port, x, y }
+  dragging: null,
+  panning: false,
+  panStart: null,
+  logsOpen: false,
+  logs: [],
+  clipboard: null,
+  runningSimulation: false,
+};
+
+// ─── INIT ─────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  renderNodeList();
+  renderFlowList();
+  setupCanvas();
+  setupDnD();
+  renderConnections();
+  updateMinimap();
+  loadDefaultFlow();
+  addLog('info', 'تدفق PRO جاهز للعمل 🚀');
+});
+
+function loadDefaultFlow() {
+  // Load starter example
+  const n1 = addNode('webhook', 200, 200);
+  const n2 = addNode('if_condition', 500, 200);
+  const n3 = addNode('email_send', 800, 130);
+  const n4 = addNode('whatsapp', 800, 300);
+  const n5 = addNode('log_output', 1100, 200);
+  addConnection(n1, 0, n2, 0);
+  addConnection(n2, 0, n3, 0);
+  addConnection(n2, 1, n4, 0);
+  addConnection(n3, 0, n5, 0);
+  renderAll();
+  updateEmptyState();
+}
+
+// ─── NODE LIST (SIDEBAR) ───────────────────────────
+function renderNodeList(filter = '') {
+  const cats = {};
+  Object.entries(NODE_DEFS).forEach(([key, def]) => {
+    if (filter && !def.name.includes(filter) && !def.desc.includes(filter) && !def.cat.includes(filter)) return;
+    if (!cats[def.cat]) cats[def.cat] = [];
+    cats[def.cat].push({ key, ...def });
+  });
+
+  const container = document.getElementById('node-list');
+  container.innerHTML = '';
+  Object.entries(cats).forEach(([cat, nodes]) => {
+    const catEl = document.createElement('div');
+    catEl.className = 'node-category';
+    catEl.innerHTML = `
+      <div class="cat-header" onclick="toggleCat(this)">
+        <span>${cat}</span><span class="cat-arrow">▾</span>
+      </div>
+      <div class="cat-items">
+        ${nodes.map(n => `
+          <div class="node-item" draggable="true"
+               data-type="${n.key}"
+               ondragstart="startSidebarDrag(event,'${n.key}')"
+               onclick="addNodeAtCenter('${n.key}')">
+            <div class="node-icon" style="background:${n.colorBg};color:${n.color}">${n.icon}</div>
+            <div class="node-item-info">
+              <div class="node-item-name">${n.name}</div>
+              <div class="node-item-desc">${n.desc}</div>
+            </div>
+          </div>`).join('')}
+      </div>`;
+    container.appendChild(catEl);
+  });
+}
+
+function toggleCat(el) {
+  el.classList.toggle('collapsed');
+  el.nextElementSibling.classList.toggle('hidden');
+}
+
+function filterNodes(val) { renderNodeList(val); }
+
+// ─── FLOW LIST ─────────────────────────────────────
+function renderFlowList() {
+  const list = document.getElementById('flow-list');
+  list.innerHTML = state.flows.map(f => `
+    <div class="flow-item ${state.currentFlow === f.id ? 'active' : ''}" onclick="switchFlow('${f.id}')">
+      <span class="flow-item-icon">⚡</span>
+      <div class="flow-item-info">
+        <div class="flow-item-name">${f.name}</div>
+        <div class="flow-item-meta">${Object.keys(f.nodes).length} عقدة</div>
+      </div>
+      <span class="flow-badge ${f.active ? 'active' : 'paused'}">${f.active ? 'نشط' : 'متوقف'}</span>
+    </div>
+  `).join('');
+}
+
+function switchFlow(id) {
+  // Save current
+  if (state.currentFlow) {
+    const cur = state.flows.find(f => f.id === state.currentFlow);
+    if (cur) { cur.nodes = state.nodes; cur.connections = state.connections; }
+  }
+  state.currentFlow = id;
+  const flow = state.flows.find(f => f.id === id);
+  if (flow) {
+    state.nodes = flow.nodes;
+    state.connections = flow.connections;
+    document.getElementById('flow-name').value = flow.name;
+  }
+  renderAll();
+  updateEmptyState();
+  renderFlowList();
+}
+
+function newFlow() {
+  const id = 'f' + Date.now();
+  state.flows.push({ id, name: 'أتمتة جديدة ' + (state.flows.length + 1), nodes: {}, connections: [], active: false });
+  switchFlow(id);
+  showFlowsSidebar();
+  addLog('info', 'تم إنشاء أتمتة جديدة');
+  showToast('تم إنشاء أتمتة جديدة ✨', 'success');
+}
+
+function showFlowsSidebar() {
+  const s = document.getElementById('flows-sidebar');
+  s.classList.remove('collapsed');
+  renderFlowList();
+}
+
+// ─── NODE MANAGEMENT ──────────────────────────────
+function addNode(type, x, y) {
+  const id = 'n' + (state.nodeIdCounter++);
+  const def = NODE_DEFS[type];
+  const defaults = {};
+  (def.fields || []).forEach(f => { defaults[f.key] = f.default; });
+  state.nodes[id] = { id, type, x, y, data: defaults, label: def.name };
+  return id;
+}
+
+function addNodeAtCenter(type) {
+  const wrap = document.getElementById('canvas-wrap');
+  const r = wrap.getBoundingClientRect();
+  const cx = (r.width / 2 - state.canvas.x) / state.canvas.scale;
+  const cy = (r.height / 2 - state.canvas.y) / state.canvas.scale;
+  const id = addNode(type, cx - 110, cy - 35);
+  renderAll();
+  updateEmptyState();
+  selectNode(id);
+  showProps(id);
+  addLog('info', `تمت إضافة عقدة "${NODE_DEFS[type].name}"`);
+  showToast(`تمت إضافة ${NODE_DEFS[type].name}`, 'success');
+}
+
+function deleteNode(id) {
+  state.connections = state.connections.filter(c => c.from !== id && c.to !== id);
+  delete state.nodes[id];
+  state.selectedNodes.delete(id);
+  closeProps();
+  renderAll();
+  updateEmptyState();
+  addLog('warn', 'تم حذف العقدة');
+}
+
+function duplicateNode(id) {
+  const node = state.nodes[id];
+  if (!node) return;
+  const newId = addNode(node.type, node.x + 30, node.y + 30);
+  state.nodes[newId].data = { ...node.data };
+  state.nodes[newId].label = node.label + ' (نسخة)';
+  renderAll();
+  selectNode(newId);
+  addLog('info', `تم نسخ العقدة "${node.label}"`);
+}
+
+// ─── RENDER ───────────────────────────────────────
+function renderAll() {
+  renderNodes();
+  renderConnections();
+  updateMinimap();
+}
+
+function renderNodes() {
+  const canvas = document.getElementById('canvas');
+  // Remove old nodes
+  canvas.querySelectorAll('.wf-node').forEach(el => el.remove());
+  // Render
+  Object.values(state.nodes).forEach(node => {
+    const def = NODE_DEFS[node.type];
+    const el = document.createElement('div');
+    el.className = 'wf-node' + (state.selectedNodes.has(node.id) ? ' selected' : '');
+    el.id = 'node-' + node.id;
+    el.style.left = node.x + 'px';
+    el.style.top = node.y + 'px';
+
+    // Input ports
+    let inputPorts = '';
+    for (let i = 0; i < (def.inputs || 0); i++) {
+      const top = def.inputs === 1 ? '50%' : `${(i + 1) * 100 / (def.inputs + 1)}%`;
+      inputPorts += `<div class="port input-port" style="top:${top};transform:translateY(-50%)"
+        data-node="${node.id}" data-dir="input" data-index="${i}"
+        onmousedown="startConnect(event,'${node.id}','input',${i})"></div>`;
+    }
+    // Output ports
+    let outputPorts = '';
+    const numOut = def.outputs || 0;
+    for (let i = 0; i < numOut; i++) {
+      const top = numOut === 1 ? '50%' : `${(i + 1) * 100 / (numOut + 1)}%`;
+      const label = def.outputLabels ? def.outputLabels[i] : '';
+      outputPorts += `<div class="port output-port" style="top:${top};transform:translateY(-50%)"
+        title="${label}"
+        data-node="${node.id}" data-dir="output" data-index="${i}"
+        onmousedown="startConnect(event,'${node.id}','output',${i})"></div>`;
+    }
+
+    el.innerHTML = `
+      <div class="node-actions">
+        <button class="na-btn" onclick="showProps('${node.id}')" title="إعدادات">⚙</button>
+        <button class="na-btn" onclick="duplicateNode('${node.id}')" title="نسخ">⧉</button>
+        <button class="na-btn del" onclick="deleteNode('${node.id}')" title="حذف">✕</button>
+      </div>
+      ${inputPorts}
+      <div class="node-header" style="border-bottom-color:${def.color}22">
+        <div class="node-header-icon" style="background:${def.colorBg};color:${def.color}">${def.icon}</div>
+        <div class="node-header-text">
+          <div class="node-title">${node.label}</div>
+          <div class="node-type" style="color:${def.color}">${def.cat}</div>
+        </div>
+      </div>
+      <div class="node-body">
+        <div class="node-status" id="status-${node.id}">
+          <div class="ns-dot"></div>
+          <span>جاهز</span>
+        </div>
+      </div>
+      ${outputPorts}`;
+
+    el.addEventListener('mousedown', e => { if (!e.target.classList.contains('port') && !e.target.classList.contains('na-btn')) startDragNode(e, node.id); });
+    el.addEventListener('click', e => { if (!e.target.classList.contains('port') && !e.target.classList.contains('na-btn')) { selectNode(node.id); e.stopPropagation(); } });
+    el.addEventListener('dblclick', () => showProps(node.id));
+
+    canvas.appendChild(el);
+  });
+  updatePortConnected();
+}
+
+function updatePortConnected() {
+  document.querySelectorAll('.port').forEach(p => p.classList.remove('connected'));
+  state.connections.forEach(c => {
+    const fNode = document.getElementById('node-' + c.from);
+    const tNode = document.getElementById('node-' + c.to);
+    if (fNode) {
+      const ports = fNode.querySelectorAll('.output-port');
+      if (ports[c.fromPort]) ports[c.fromPort].classList.add('connected');
+    }
+    if (tNode) {
+      const ports = tNode.querySelectorAll('.input-port');
+      if (ports[c.toPort]) ports[c.toPort].classList.add('connected');
+    }
+  });
+}
+
+// ─── CONNECTIONS ──────────────────────────────────
+function addConnection(fromId, fromPort, toId, toPort) {
+  // Avoid duplicate
+  const exists = state.connections.find(c => c.from === fromId && c.fromPort === fromPort && c.to === toId && c.toPort === toPort);
+  if (!exists) {
+    state.connections.push({ id: 'c' + Date.now() + Math.random(), from: fromId, fromPort, to: toId, toPort });
+  }
+}
+
+function renderConnections() {
+  const svg = document.getElementById('svg-layer');
+  svg.querySelectorAll('.connection-path, .conn-label').forEach(e => e.remove());
+
+  state.connections.forEach(conn => {
+    const fromEl = document.getElementById('node-' + conn.from);
+    const toEl = document.getElementById('node-' + conn.to);
+    if (!fromEl || !toEl) return;
+
+    const fromPorts = fromEl.querySelectorAll('.output-port');
+    const toPorts = toEl.querySelectorAll('.input-port');
+    const fp = fromPorts[conn.fromPort];
+    const tp = toPorts[conn.toPort];
+    if (!fp || !tp) return;
+
+    const fr = fp.getBoundingClientRect();
+    const tr = tp.getBoundingClientRect();
+    const wrap = document.getElementById('canvas-wrap').getBoundingClientRect();
+
+    const sx = (fr.left + fr.width / 2 - wrap.left - state.canvas.x) / state.canvas.scale;
+    const sy = (fr.top + fr.height / 2 - wrap.top - state.canvas.y) / state.canvas.scale;
+    const ex = (tr.left + tr.width / 2 - wrap.left - state.canvas.x) / state.canvas.scale;
+    const ey = (tr.top + tr.height / 2 - wrap.top - state.canvas.y) / state.canvas.scale;
+
+    const dx = Math.abs(ex - sx) * .55;
+    const d = `M${sx},${sy} C${sx - dx},${sy} ${ex + dx},${ey} ${ex},${ey}`;
+
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', d);
+    path.setAttribute('class', 'connection-path' + (state.selectedConn === conn.id ? ' selected' : ''));
+    path.setAttribute('marker-end', state.selectedConn === conn.id ? 'url(#arr-sel)' : 'url(#arr)');
+    path.dataset.connId = conn.id;
+    path.addEventListener('click', e => { state.selectedConn = conn.id; renderConnections(); e.stopPropagation(); });
+    path.addEventListener('dblclick', () => {
+      state.connections = state.connections.filter(c => c.id !== conn.id);
+      state.selectedConn = null;
+      renderConnections();
+      addLog('warn', 'تم حذف الاتصال');
+    });
+    svg.appendChild(path);
+  });
+}
+
+// ─── NODE DRAGGING ────────────────────────────────
+function startDragNode(e, id) {
+  if (e.button !== 0) return;
+  e.preventDefault();
+  e.stopPropagation();
+
+  if (!e.shiftKey && !state.selectedNodes.has(id)) {
+    state.selectedNodes.clear();
+    state.selectedNodes.add(id);
+    renderNodes();
+  } else if (e.shiftKey) {
+    state.selectedNodes.add(id);
+    renderNodes();
+  }
+
+  const startPositions = {};
+  state.selectedNodes.forEach(nid => {
+    const n = state.nodes[nid];
+    if (n) startPositions[nid] = { x: n.x, y: n.y };
+  });
+
+  const startX = e.clientX, startY = e.clientY;
+
+  function onMove(me) {
+    const dx = (me.clientX - startX) / state.canvas.scale;
+    const dy = (me.clientY - startY) / state.canvas.scale;
+    state.selectedNodes.forEach(nid => {
+      if (startPositions[nid] && state.nodes[nid]) {
+        state.nodes[nid].x = Math.round(startPositions[nid].x + dx);
+        state.nodes[nid].y = Math.round(startPositions[nid].y + dy);
+        const el = document.getElementById('node-' + nid);
+        if (el) { el.style.left = state.nodes[nid].x + 'px'; el.style.top = state.nodes[nid].y + 'px'; }
+      }
+    });
+    renderConnections();
+    updateMinimap();
+  }
+  function onUp() {
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+  }
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+}
+
+// ─── CANVAS PAN & ZOOM ────────────────────────────
+function setupCanvas() {
+  const wrap = document.getElementById('canvas-wrap');
+  applyTransform();
+
+  // Pan
+  wrap.addEventListener('mousedown', e => {
+    if (e.button === 1 || (e.button === 0 && e.target === wrap)) {
+      if (e.button === 0) {
+        // Selection box
+        startSelBox(e);
+        return;
+      }
+      state.panning = true;
+      state.panStart = { x: e.clientX - state.canvas.x, y: e.clientY - state.canvas.y };
+      wrap.style.cursor = 'grabbing';
+    }
+  });
+
+  document.addEventListener('mousedown', e => {
+    if (e.button === 1) {
+      e.preventDefault();
+      state.panning = true;
+      state.panStart = { x: e.clientX - state.canvas.x, y: e.clientY - state.canvas.y };
+      document.getElementById('canvas-wrap').style.cursor = 'grabbing';
+    }
+  });
+
+  document.addEventListener('mousemove', e => {
+    if (state.panning && state.panStart) {
+      state.canvas.x = e.clientX - state.panStart.x;
+      state.canvas.y = e.clientY - state.panStart.y;
+      applyTransform();
+      updateMinimap();
+    }
+    if (state.connecting) updateTempLine(e);
+    if (state.selBox) updateSelBox(e);
+  });
+
+  document.addEventListener('mouseup', e => {
+    if (state.panning) {
+      state.panning = false;
+      document.getElementById('canvas-wrap').style.cursor = '';
+    }
+    if (state.connecting) endConnect(e);
+    if (state.selBox) endSelBox(e);
+  });
+
+  wrap.addEventListener('wheel', e => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? 0.88 : 1.13;
+    const rect = wrap.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    state.canvas.x = mx - (mx - state.canvas.x) * delta;
+    state.canvas.y = my - (my - state.canvas.y) * delta;
+    state.canvas.scale = Math.min(2.5, Math.max(0.2, state.canvas.scale * delta));
+    applyTransform();
+    renderConnections();
+    updateMinimap();
+    updateZoomLabel();
+  }, { passive: false });
+
+  // Click on empty
+  wrap.addEventListener('click', e => {
+    if (e.target === wrap || e.target.id === 'canvas') {
+      state.selectedNodes.clear();
+      state.selectedConn = null;
+      renderNodes();
+      renderConnections();
+      closeProps();
+    }
+  });
+}
+
+function applyTransform() {
+  const c = document.getElementById('canvas');
+  c.style.transform = `translate(${state.canvas.x}px,${state.canvas.y}px) scale(${state.canvas.scale})`;
+}
+
+function zoom(factor) {
+  const wrap = document.getElementById('canvas-wrap');
+  const r = wrap.getBoundingClientRect();
+  const cx = r.width / 2, cy = r.height / 2;
+  state.canvas.x = cx - (cx - state.canvas.x) * factor;
+  state.canvas.y = cy - (cy - state.canvas.y) * factor;
+  state.canvas.scale = Math.min(2.5, Math.max(0.2, state.canvas.scale * factor));
+  applyTransform();
+  renderConnections();
+  updateMinimap();
+  updateZoomLabel();
+}
+
+function resetView() {
+  state.canvas = { x: 80, y: 60, scale: 1 };
+  applyTransform();
+  renderConnections();
+  updateMinimap();
+  updateZoomLabel();
+}
+
+function updateZoomLabel() {
+  document.getElementById('zoom-label').textContent = Math.round(state.canvas.scale * 100) + '%';
+}
+
+// ─── SELECTION BOX ────────────────────────────────
+let selStart = null;
+function startSelBox(e) {
+  const wrap = document.getElementById('canvas-wrap');
+  const r = wrap.getBoundingClientRect();
+  selStart = { x: e.clientX - r.left, y: e.clientY - r.top };
+  state.selBox = true;
+  const box = document.getElementById('sel-box');
+  box.style.display = 'block';
+  box.style.left = selStart.x + 'px';
+  box.style.top = selStart.y + 'px';
+  box.style.width = '0';
+  box.style.height = '0';
+}
+function updateSelBox(e) {
+  if (!selStart) return;
+  const wrap = document.getElementById('canvas-wrap');
+  const r = wrap.getBoundingClientRect();
+  const cx = e.clientX - r.left, cy = e.clientY - r.top;
+  const box = document.getElementById('sel-box');
+  box.style.left = Math.min(cx, selStart.x) + 'px';
+  box.style.top = Math.min(cy, selStart.y) + 'px';
+  box.style.width = Math.abs(cx - selStart.x) + 'px';
+  box.style.height = Math.abs(cy - selStart.y) + 'px';
+}
+function endSelBox(e) {
+  state.selBox = false;
+  const box = document.getElementById('sel-box');
+  box.style.display = 'none';
+  if (!selStart) return;
+  const wrap = document.getElementById('canvas-wrap');
+  const r = wrap.getBoundingClientRect();
+  const cx = e.clientX - r.left, cy = e.clientY - r.top;
+  const rx1 = (Math.min(cx, selStart.x) - state.canvas.x) / state.canvas.scale;
+  const ry1 = (Math.min(cy, selStart.y) - state.canvas.y) / state.canvas.scale;
+  const rx2 = (Math.max(cx, selStart.x) - state.canvas.x) / state.canvas.scale;
+  const ry2 = (Math.max(cy, selStart.y) - state.canvas.y) / state.canvas.scale;
+  if (Math.abs(cx - selStart.x) > 5 || Math.abs(cy - selStart.y) > 5) {
+    state.selectedNodes.clear();
+    Object.values(state.nodes).forEach(n => {
+      if (n.x >= rx1 && n.x + 220 <= rx2 && n.y >= ry1 && n.y + 80 <= ry2)
+        state.selectedNodes.add(n.id);
+    });
+    renderNodes();
+  }
+  selStart = null;
+}
+
+function selectAll() {
+  Object.keys(state.nodes).forEach(id => state.selectedNodes.add(id));
+  renderNodes();
+}
+
+// ─── CONNECTING ───────────────────────────────────
+function startConnect(e, nodeId, dir, portIndex) {
+  e.preventDefault();
+  e.stopPropagation();
+  if (dir === 'output') {
+    const port = e.target;
+    const r = port.getBoundingClientRect();
+    const wrap = document.getElementById('canvas-wrap').getBoundingClientRect();
+    state.connecting = {
+      nodeId,
+      portIndex,
+      sx: (r.left + r.width / 2 - wrap.left - state.canvas.x) / state.canvas.scale,
+      sy: (r.top + r.height / 2 - wrap.top - state.canvas.y) / state.canvas.scale,
+    };
+  } else {
+    // Connecting to input: find the connection and allow removal
+    const existing = state.connections.find(c => c.to === nodeId && c.toPort === portIndex);
+    if (existing) {
+      state.connections = state.connections.filter(c => c !== existing);
+      renderAll();
+    }
+  }
+}
+
+function updateTempLine(e) {
+  if (!state.connecting) return;
+  const wrap = document.getElementById('canvas-wrap').getBoundingClientRect();
+  const ex = (e.clientX - wrap.left - state.canvas.x) / state.canvas.scale;
+  const ey = (e.clientY - wrap.top - state.canvas.y) / state.canvas.scale;
+  const { sx, sy } = state.connecting;
+  const dx = Math.abs(ex - sx) * .55;
+  const d = `M${sx},${sy} C${sx - dx},${sy} ${ex + dx},${ey} ${ex},${ey}`;
+  document.getElementById('temp-path').setAttribute('d', d);
+}
+
+function endConnect(e) {
+  if (!state.connecting) return;
+  document.getElementById('temp-path').setAttribute('d', '');
+  const el = document.elementFromPoint(e.clientX, e.clientY);
+  if (el && el.classList.contains('port') && el.dataset.dir === 'input') {
+    const toNode = el.dataset.node;
+    const toPort = parseInt(el.dataset.index);
+    if (toNode !== state.connecting.nodeId) {
+      addConnection(state.connecting.nodeId, state.connecting.portIndex, toNode, toPort);
+      renderAll();
+      addLog('info', 'تم إنشاء اتصال جديد');
+    }
+  }
+  state.connecting = null;
+}
+
+// ─── DRAG & DROP from sidebar ─────────────────────
+function setupDnD() {
+  const wrap = document.getElementById('canvas-wrap');
+  wrap.addEventListener('dragover', e => { e.preventDefault(); updateDragGhost(e); });
+  wrap.addEventListener('drop', e => { e.preventDefault(); handleCanvasDrop(e); hideDragGhost(); });
+  wrap.addEventListener('dragleave', () => hideDragGhost());
+  document.addEventListener('dragend', () => hideDragGhost());
+}
+
+let dragType = null;
+function startSidebarDrag(e, type) {
+  dragType = type;
+  const def = NODE_DEFS[type];
+  const ghost = document.getElementById('drag-ghost');
+  ghost.style.display = 'flex';
+  document.getElementById('ghost-icon').textContent = def.icon;
+  document.getElementById('ghost-name').textContent = def.name;
+  e.dataTransfer.setData('nodeType', type);
+  e.dataTransfer.setDragImage(document.createElement('div'), 0, 0);
+}
+
+function updateDragGhost(e) {
+  const ghost = document.getElementById('drag-ghost');
+  ghost.style.left = (e.clientX + 12) + 'px';
+  ghost.style.top = (e.clientY - 20) + 'px';
+}
+
+function hideDragGhost() {
+  document.getElementById('drag-ghost').style.display = 'none';
+  dragType = null;
+}
+
+function handleCanvasDrop(e) {
+  const type = e.dataTransfer.getData('nodeType') || dragType;
+  if (!type || !NODE_DEFS[type]) return;
+  const wrap = document.getElementById('canvas-wrap').getBoundingClientRect();
+  const x = (e.clientX - wrap.left - state.canvas.x) / state.canvas.scale - 110;
+  const y = (e.clientY - wrap.top - state.canvas.y) / state.canvas.scale - 35;
+  const id = addNode(type, Math.round(x), Math.round(y));
+  renderAll();
+  updateEmptyState();
+  selectNode(id);
+  showProps(id);
+  addLog('info', `تمت إضافة عقدة "${NODE_DEFS[type].name}"`);
+}
+
+// ─── SELECTION ────────────────────────────────────
+function selectNode(id) {
+  state.selectedNodes.clear();
+  state.selectedNodes.add(id);
+  renderNodes();
+}
+
+// ─── PROPERTIES PANEL ─────────────────────────────
+function showProps(id) {
+  const node = state.nodes[id];
+  if (!node) return;
+  const def = NODE_DEFS[node.type];
+  const panel = document.getElementById('props-panel');
+  panel.classList.add('open');
+  document.getElementById('props-title').textContent = node.label;
+
+  let html = `
+    <div class="prop-group">
+      <div class="prop-group-title">معلومات العقدة</div>
+      <div class="prop-field">
+        <label class="prop-label">الاسم</label>
+        <input class="prop-input" value="${node.label}"
+          onchange="state.nodes['${id}'].label=this.value;renderNodes();" />
+      </div>
+    </div>
+    <div class="prop-group">
+      <div class="prop-group-title">الإعدادات</div>`;
+
+  (def.fields || []).forEach(field => {
+    const val = node.data[field.key] !== undefined ? node.data[field.key] : field.default;
+    html += `<div class="prop-field"><label class="prop-label">${field.label}</label>`;
+
+    if (field.type === 'select') {
+      html += `<select class="prop-select" onchange="state.nodes['${id}'].data['${field.key}']=this.value">
+        ${field.options.map(o => `<option value="${o}" ${val === o ? 'selected' : ''}>${o}</option>`).join('')}
+      </select>`;
+    } else if (field.type === 'textarea') {
+      html += `<textarea class="prop-textarea" onchange="state.nodes['${id}'].data['${field.key}']=this.value">${escHtml(val)}</textarea>`;
+    } else if (field.type === 'code') {
+      html += `<textarea class="code-editor" onchange="state.nodes['${id}'].data['${field.key}']=this.value">${escHtml(val)}</textarea>`;
+    } else if (field.type === 'toggle') {
+      html += `<div class="toggle-row"><span class="toggle-label">تفعيل</span>
+        <div class="toggle ${val ? 'on' : ''}" onclick="this.classList.toggle('on');state.nodes['${id}'].data['${field.key}']=this.classList.contains('on')"></div>
+      </div>`;
+    } else {
+      html += `<input class="prop-input" type="${field.type || 'text'}" value="${escHtml(val)}"
+        onchange="state.nodes['${id}'].data['${field.key}']=this.value" />`;
+    }
+    html += `</div>`;
+  });
+
+  html += `</div>
+    <div class="prop-group">
+      <div class="prop-group-title">اختبار</div>
+      <button class="test-btn" onclick="testNode('${id}')">▶ اختبار العقدة</button>
+      <button class="test-btn secondary" onclick="deleteNode('${id}')" style="margin-top:8px">🗑 حذف العقدة</button>
+    </div>`;
+
+  document.getElementById('props-body').innerHTML = html;
+}
+
+function closeProps() {
+  document.getElementById('props-panel').classList.remove('open');
+}
+
+function escHtml(s) {
+  if (typeof s !== 'string') return s;
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ─── TESTING ──────────────────────────────────────
+async function testNode(id) {
+  const node = state.nodes[id];
+  if (!node) return;
+  const def = NODE_DEFS[node.type];
+  const el = document.getElementById('node-' + id);
+  if (el) el.classList.add('running');
+  setNodeStatus(id, 'run', 'يعمل...');
+  addLog('info', `اختبار عقدة "${node.label}"...`);
+
+  await sleep(800 + Math.random() * 1200);
+
+  const success = Math.random() > 0.2;
+  if (el) { el.classList.remove('running'); el.classList.add(success ? 'success-run' : 'error-run'); }
+  setNodeStatus(id, success ? 'ok' : 'err', success ? 'نجح الاختبار ✓' : 'فشل الاختبار ✗');
+  addLog(success ? 'success' : 'error', `${node.label}: ${success ? 'نجح الاختبار' : 'فشل - تحقق من الإعدادات'}`);
+  showToast(success ? `نجح اختبار "${node.label}" ✓` : `فشل اختبار "${node.label}" ✗`, success ? 'success' : 'error');
+
+  setTimeout(() => { if (el) { el.classList.remove('success-run', 'error-run'); } setNodeStatus(id, '', 'جاهز'); }, 3000);
+}
+
+function setNodeStatus(id, cls, text) {
+  const statusEl = document.getElementById('status-' + id);
+  if (!statusEl) return;
+  statusEl.className = 'node-status ' + cls;
+  statusEl.innerHTML = `<div class="ns-dot"></div><span>${text}</span>`;
+}
+
+// ─── RUN FLOW ─────────────────────────────────────
+async function runFlow() {
+  if (state.runningSimulation) return;
+  const nodes = Object.values(state.nodes);
+  if (!nodes.length) { showToast('لا توجد عقدات للتشغيل', 'error'); return; }
+
+  state.runningSimulation = true;
+  setRunStatus('running', 'جاري التشغيل...');
+  addLog('info', '═══ بدء تنفيذ سير العمل ═══');
+
+  // Find trigger nodes (no inputs)
+  const triggers = nodes.filter(n => (NODE_DEFS[n.type].inputs || 0) === 0);
+  const order = topologicalSort(triggers.map(n => n.id));
+
+  for (const id of order) {
+    const node = state.nodes[id];
+    if (!node) continue;
+    const el = document.getElementById('node-' + id);
+    if (el) el.classList.add('running');
+    setNodeStatus(id, 'run', 'يعمل...');
+    await sleep(400 + Math.random() * 600);
+    const ok = Math.random() > 0.1;
+    if (el) { el.classList.remove('running'); el.classList.add(ok ? 'success-run' : 'error-run'); }
+    setNodeStatus(id, ok ? 'ok' : 'err', ok ? 'نجح ✓' : 'فشل ✗');
+    addLog(ok ? 'success' : 'error', `${node.label}: ${ok ? 'تم التنفيذ بنجاح' : 'حدث خطأ'}`);
+    if (!ok) break;
+  }
+
+  state.runningSimulation = false;
+  setRunStatus('done', 'اكتمل التنفيذ ✓');
+  addLog('success', '═══ اكتمل تنفيذ سير العمل ═══');
+  showToast('اكتمل تنفيذ سير العمل ✓', 'success');
+
+  setTimeout(() => {
+    nodes.forEach(n => {
+      const el = document.getElementById('node-' + n.id);
+      if (el) { el.classList.remove('success-run', 'error-run'); }
+      setNodeStatus(n.id, '', 'جاهز');
+    });
+    setRunStatus('', 'جاهز');
+  }, 4000);
+}
+
+function topologicalSort(starts) {
+  const visited = new Set();
+  const order = [];
+  function visit(id) {
+    if (visited.has(id)) return;
+    visited.add(id);
+    order.push(id);
+    const outConns = state.connections.filter(c => c.from === id);
+    outConns.forEach(c => visit(c.to));
+  }
+  starts.forEach(id => visit(id));
+  // Also add any unreached nodes
+  Object.keys(state.nodes).forEach(id => { if (!visited.has(id)) { visited.add(id); order.push(id); } });
+  return order;
+}
+
+function setRunStatus(type, text) {
+  const dot = document.getElementById('run-dot');
+  const label = document.getElementById('run-status-text');
+  dot.className = 'run-dot ' + type;
+  label.textContent = text;
+}
+
+// ─── CONTEXT MENU ─────────────────────────────────
+let ctxPos = { x: 0, y: 0 };
+function showCtxMenu(e) {
+  e.preventDefault();
+  ctxPos = { x: e.clientX, y: e.clientY };
+  const menu = document.getElementById('ctx-menu');
+  menu.style.display = 'block';
+  menu.style.left = e.clientX + 'px';
+  menu.style.top = e.clientY + 'px';
+  document.getElementById('ctx-paste').style.opacity = state.clipboard ? '1' : '.4';
+  document.addEventListener('click', hideCtxMenu, { once: true });
+}
+function hideCtxMenu() { document.getElementById('ctx-menu').style.display = 'none'; }
+function ctxPaste() {
+  if (!state.clipboard) return;
+  const wrap = document.getElementById('canvas-wrap').getBoundingClientRect();
+  const x = (ctxPos.x - wrap.left - state.canvas.x) / state.canvas.scale - 110;
+  const y = (ctxPos.y - wrap.top - state.canvas.y) / state.canvas.scale - 35;
+  const id = addNode(state.clipboard.type, x, y);
+  state.nodes[id].data = { ...state.clipboard.data };
+  renderAll();
+  addLog('info', 'تم اللصق');
+}
+
+// ─── AUTO LAYOUT ──────────────────────────────────
+function autoLayout() {
+  const nodes = Object.values(state.nodes);
+  if (!nodes.length) return;
+
+  // Simple left-to-right layered layout
+  const layers = {};
+  const triggers = nodes.filter(n => (NODE_DEFS[n.type].inputs || 0) === 0);
+  function assignLayer(id, layer) {
+    if (layers[id] !== undefined) return;
+    layers[id] = layer;
+    state.connections.filter(c => c.from === id).forEach(c => assignLayer(c.to, layer + 1));
+  }
+  triggers.forEach(n => assignLayer(n.id, 0));
+  nodes.forEach(n => { if (layers[n.id] === undefined) layers[n.id] = 0; });
+
+  const byLayer = {};
+  nodes.forEach(n => {
+    const l = layers[n.id] || 0;
+    if (!byLayer[l]) byLayer[l] = [];
+    byLayer[l].push(n.id);
+  });
+
+  Object.entries(byLayer).forEach(([layer, ids]) => {
+    ids.forEach((id, i) => {
+      state.nodes[id].x = 100 + parseInt(layer) * 280;
+      state.nodes[id].y = 100 + i * 110;
+    });
+  });
+
+  renderAll();
+  addLog('info', 'تم الترتيب التلقائي');
+  showToast('تم الترتيب التلقائي ✓', 'success');
+}
+
+// ─── SAVE / EXPORT / IMPORT ───────────────────────
+function saveFlow() {
+  const data = { name: document.getElementById('flow-name').value, nodes: state.nodes, connections: state.connections, version: '3.0' };
+  localStorage.setItem('tadflow_current', JSON.stringify(data));
+  addLog('success', 'تم الحفظ');
+  showToast('تم الحفظ بنجاح 💾', 'success');
+}
+
+function exportFlow() {
+  const data = { name: document.getElementById('flow-name').value, nodes: state.nodes, connections: state.connections, version: '3.0', exportedAt: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = (document.getElementById('flow-name').value || 'flow') + '.tadflow.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  addLog('success', 'تم التصدير');
+  showToast('تم التصدير ✓', 'success');
+}
+
+function importFlow() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json,.tadflow.json';
+  input.onchange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        state.nodes = data.nodes || {};
+        state.connections = data.connections || [];
+        document.getElementById('flow-name').value = data.name || 'سير عمل مستورد';
+        renderAll();
+        updateEmptyState();
+        addLog('success', `تم استيراد "${data.name}"`);
+        showToast('تم الاستيراد بنجاح ✓', 'success');
+      } catch { showToast('ملف غير صالح ✗', 'error'); }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+function clearCanvas() {
+  showModal('تأكيد المسح', '<p style="color:var(--text-secondary);line-height:1.7">هل أنت متأكد من مسح جميع العقدات والاتصالات؟<br>لا يمكن التراجع عن هذا الإجراء.</p>',
+    [{ label: 'مسح الكل', cls: 'danger', fn: () => { state.nodes = {}; state.connections = []; state.selectedNodes.clear(); state.selectedConn = null; renderAll(); updateEmptyState(); closeModal(); addLog('warn', 'تم مسح جميع العقدات'); showToast('تم المسح', 'success'); } },
+     { label: 'إلغاء', cls: '', fn: closeModal }]);
+}
+
+// ─── LOGS ─────────────────────────────────────────
+function addLog(level, msg) {
+  const now = new Date();
+  const time = now.toLocaleTimeString('ar-EG', { hour12: false });
+  state.logs.push({ level, msg, time });
+  const body = document.getElementById('logs-body');
+  const entry = document.createElement('div');
+  entry.className = 'log-entry';
+  entry.innerHTML = `<span class="log-time">${time}</span><span class="log-level ${level}">${level.toUpperCase()}</span><span class="log-msg">${msg}</span>`;
+  body.appendChild(entry);
+  body.scrollTop = body.scrollHeight;
+  const cnt = document.getElementById('log-count');
+  cnt.textContent = state.logs.length;
+}
+
+function clearLogs() {
+  state.logs = [];
+  document.getElementById('logs-body').innerHTML = '';
+  document.getElementById('log-count').textContent = '0';
+}
+
+function toggleLogs() {
+  state.logsOpen = !state.logsOpen;
+  document.getElementById('logs-panel').classList.toggle('open', state.logsOpen);
+}
+
+// ─── MINIMAP ──────────────────────────────────────
+function updateMinimap() {
+  const canvas = document.getElementById('minimap-canvas');
+  const ctx = canvas.getContext('2d');
+  const W = 180, H = 110;
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#0f1217';
+  ctx.fillRect(0, 0, W, H);
+
+  const nodes = Object.values(state.nodes);
+  if (!nodes.length) return;
+
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  nodes.forEach(n => {
+    minX = Math.min(minX, n.x); minY = Math.min(minY, n.y);
+    maxX = Math.max(maxX, n.x + 220); maxY = Math.max(maxY, n.y + 80);
+  });
+
+  const pad = 12;
+  const scaleX = (W - pad * 2) / (maxX - minX || 1);
+  const scaleY = (H - pad * 2) / (maxY - minY || 1);
+  const s = Math.min(scaleX, scaleY, 0.15);
+
+  // Draw connections
+  ctx.strokeStyle = '#3b82f650';
+  ctx.lineWidth = 1;
+  state.connections.forEach(c => {
+    const fn = state.nodes[c.from], tn = state.nodes[c.to];
+    if (!fn || !tn) return;
+    ctx.beginPath();
+    ctx.moveTo(pad + (fn.x + 0 - minX) * s, pad + (fn.y + 35 - minY) * s);
+    ctx.lineTo(pad + (tn.x + 220 - minX) * s, pad + (tn.y + 35 - minY) * s);
+    ctx.stroke();
+  });
+
+  // Draw nodes
+  nodes.forEach(n => {
+    const def = NODE_DEFS[n.type];
+    ctx.fillStyle = def.color + '99';
+    const x = pad + (n.x - minX) * s;
+    const y = pad + (n.y - minY) * s;
+    const w = 220 * s, h = 70 * s;
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, h, 2);
+    ctx.fill();
+  });
+
+  // Viewport indicator
+  const wrap = document.getElementById('canvas-wrap');
+  const r = wrap.getBoundingClientRect();
+  const vx = pad + (-state.canvas.x / state.canvas.scale - minX) * s;
+  const vy = pad + (-state.canvas.y / state.canvas.scale - minY) * s;
+  const vw = (r.width / state.canvas.scale) * s;
+  const vh = (r.height / state.canvas.scale) * s;
+  ctx.strokeStyle = '#3b82f6';
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(vx, vy, vw, vh);
+}
+
+// ─── EMPTY STATE ──────────────────────────────────
+function updateEmptyState() {
+  const empty = document.getElementById('canvas-empty');
+  empty.classList.toggle('hidden', Object.keys(state.nodes).length > 0);
+}
+
+// ─── TOAST ────────────────────────────────────────
+let toastTimer;
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show' + (type ? ' t-' + type : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.className = ''; }, 3000);
+}
+
+// ─── MODAL ────────────────────────────────────────
+function showModal(title, body, buttons = []) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').innerHTML = body;
+  const foot = document.getElementById('modal-foot');
+  foot.innerHTML = '';
+  buttons.forEach(b => {
+    const btn = document.createElement('button');
+    btn.className = 'tb-btn ' + (b.cls || '');
+    btn.textContent = b.label;
+    btn.style.height = '38px';
+    btn.onclick = b.fn;
+    foot.appendChild(btn);
+  });
+  document.getElementById('modal-overlay').classList.add('show');
+}
+function closeModal() { document.getElementById('modal-overlay').classList.remove('show'); }
+
+// ─── UTILS ────────────────────────────────────────
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ─── KEYBOARD SHORTCUTS ───────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveFlow(); }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z') { /* TODO: undo */ }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'a') { e.preventDefault(); selectAll(); }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+    if (state.selectedNodes.size === 1) {
+      const id = [...state.selectedNodes][0];
+      state.clipboard = { type: state.nodes[id].type, data: { ...state.nodes[id].data } };
+      showToast('تم النسخ', 'success');
+    }
+  }
+  if (e.key === 'Delete' || e.key === 'Backspace') {
+    if (state.selectedNodes.size > 0) {
+      state.selectedNodes.forEach(id => deleteNode(id));
+    } else if (state.selectedConn) {
+      state.connections = state.connections.filter(c => c.id !== state.selectedConn);
+      state.selectedConn = null;
+      renderConnections();
+    }
+  }
+  if (e.key === 'Escape') {
+    state.selectedNodes.clear();
+    state.connecting = null;
+    document.getElementById('temp-path').setAttribute('d', '');
+    renderNodes();
+    closeProps();
+  }
+  if (e.key === '+' || e.key === '=') zoom(1.1);
+  if (e.key === '-') zoom(0.9);
+  if (e.key === '0') resetView();
+});
+</script>
+</body>
+</html>
