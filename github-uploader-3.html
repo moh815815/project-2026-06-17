@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GitHub ZIP Uploader</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Tajawal:wght@400;700;900&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --border: #1e1e2e;
+    --accent: #00ff88;
+    --accent2: #0088ff;
+    --text: #e0e0e0;
+    --muted: #555570;
+    --error: #ff4455;
+    --warning: #ffaa00;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Tajawal', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px;
+    background-image:
+      radial-gradient(ellipse at 20% 0%, #00ff8811 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 100%, #0088ff11 0%, transparent 50%);
+  }
+
+  header {
+    width: 100%;
+    max-width: 640px;
+    margin-bottom: 32px;
+    text-align: center;
+  }
+
+  .logo {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    opacity: 0.8;
+  }
+
+  h1 {
+    font-size: 28px;
+    font-weight: 900;
+    background: linear-gradient(135deg, #fff 0%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.2;
+    margin-bottom: 8px;
+  }
+
+  .subtitle { color: var(--muted); font-size: 14px; }
+
+  .card {
+    width: 100%;
+    max-width: 640px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 16px;
+  }
+
+  .card-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  .field { margin-bottom: 16px; }
+  .field:last-child { margin-bottom: 0; }
+
+  .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text);
+  }
+  .checkbox-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--accent);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  label {
+    display: block;
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  input[type="text"],
+  input[type="password"],
+  select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+    direction: ltr;
+    text-align: left;
+    appearance: none;
+  }
+
+  input:focus, select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px #00ff8820;
+  }
+
+  .hint {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 6px;
+    line-height: 1.5;
+  }
+
+  .hint a { color: var(--accent2); text-decoration: none; }
+
+  .warning-box {
+    background: #ffaa0010;
+    border: 1px solid #ffaa0030;
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 12px;
+    color: var(--warning);
+    margin-bottom: 16px;
+    line-height: 1.6;
+  }
+
+  /* Token input with eye toggle */
+  .input-wrap { position: relative; }
+  .input-wrap input { padding-left: 40px; }
+  .toggle-eye {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    padding: 0;
+  }
+
+  /* Test token button */
+  .btn-test {
+    width: 100%;
+    padding: 10px 14px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    font-family: 'Tajawal', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+    text-align: center;
+  }
+  .btn-test:hover { border-color: var(--accent2); color: var(--accent2); }
+
+  .test-result {
+    display: none;
+    margin-top: 8px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    direction: ltr;
+    text-align: left;
+  }
+
+  /* Drop zone */
+  .drop-zone {
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .drop-zone:hover, .drop-zone.dragover {
+    border-color: var(--accent);
+    background: #00ff8808;
+  }
+  .drop-zone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+  .drop-icon { font-size: 36px; margin-bottom: 12px; }
+  .drop-text { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .drop-sub { font-size: 12px; color: var(--muted); }
+
+  /* Files list */
+  .sort-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 14px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .sort-row select {
+    flex: 1;
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+  .files-list { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
+
+  .mode-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 16px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 4px;
+  }
+  .mode-tab {
+    flex: 1;
+    padding: 10px;
+    background: none;
+    border: none;
+    border-radius: 8px;
+    color: var(--muted);
+    font-family: 'Tajawal', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .mode-tab.active {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #000;
+  }
+  .mode-tab:not(.active):hover { color: var(--text); }
+
+  .file-item {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+  }
+  .file-name {
+    flex: 1;
+    color: var(--text);
+    direction: ltr;
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .file-size { color: var(--muted); font-size: 11px; flex-shrink: 0; }
+  .file-remove {
+    color: var(--error);
+    cursor: pointer;
+    font-size: 16px;
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    line-height: 1;
+    padding: 0;
+  }
+
+  /* Upload button */
+  .btn-upload {
+    width: 100%;
+    padding: 16px;
+    border-radius: 12px;
+    border: none;
+    font-family: 'Tajawal', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .btn-upload:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px #00ff8830;
+  }
+  .btn-upload:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .readiness {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+  .readiness-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .readiness-item.done  { color: var(--accent); }
+  .readiness-item.todo  { color: var(--muted); }
+
+  /* Progress */
+  .progress-wrap { display: none; margin-top: 20px; }
+
+  .progress-header {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .progress-bar {
+    height: 6px;
+    background: var(--border);
+    border-radius: 99px;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 99px;
+    transition: width 0.3s ease;
+    width: 0%;
+  }
+
+  /* Log */
+  .log {
+    max-height: 220px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    scroll-behavior: smooth;
+  }
+  .log-line {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    direction: ltr;
+    text-align: left;
+    line-height: 1.5;
+  }
+  .log-line.info  { color: var(--muted); }
+  .log-line.ok    { color: var(--accent); background: #00ff8808; }
+  .log-line.fail  { color: var(--error);  background: #ff445510; }
+  .log-line.warn  { color: var(--warning); }
+  .log-line.sep   { color: #333; border-top: 1px solid #1e1e2e; margin-top: 4px; padding-top: 6px; }
+
+  /* Result links */
+  .result-links { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+
+  .result-link {
+    background: var(--bg);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    text-decoration: none;
+    color: var(--accent);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    direction: ltr;
+    transition: background 0.2s;
+  }
+  .result-link:hover { background: #00ff8810; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">⚡ Git Push Tool</div>
+  <h1>ارفع مشاريعك على GitHub</h1>
+  <p class="subtitle">ZIP → فك الضغط → رفع تلقائي على GitHub</p>
+</header>
+
+<!-- Step 1: Account -->
+<div class="card">
+  <div class="card-title">🔑 إعداد الحساب</div>
+
+  <div class="warning-box">
+    ⚠️ التوكن بيتبعت لـ GitHub API مباشرة من متصفحك — مش بيتحفظ على أي سيرفر.
+  </div>
+
+  <div class="field">
+    <label>GitHub Username</label>
+    <input type="text" id="username" placeholder="your-username" autocomplete="off" />
+  </div>
+
+  <div class="field">
+    <label>Personal Access Token (Classic)</label>
+    <div class="input-wrap">
+      <input type="password" id="token" placeholder="ghp_xxxxxxxxxxxx" autocomplete="off" />
+      <button class="toggle-eye" onclick="toggleEye()" type="button">👁</button>
+    </div>
+    <div class="hint">
+      لازم Classic Token —
+      <a href="https://github.com/settings/tokens/new?scopes=repo&description=ZIP+Uploader" target="_blank">
+        أنشئ من هنا
+      </a>
+      وفعّل صلاحية <code>repo</code> فقط
+    </div>
+  </div>
+
+  <div class="field">
+    <button class="btn-test" onclick="testToken()" type="button">🔍 اختبر التوكن</button>
+    <div class="test-result" id="testResult"></div>
+  </div>
+</div>
+
+<!-- Step 2: Settings -->
+<div class="card">
+  <div class="card-title">⚙️ إعدادات الرفع</div>
+
+  <div class="field">
+    <label>نوع الـ Repositories</label>
+    <select id="visibility">
+      <option value="false">🌍 Public</option>
+      <option value="true">🔒 Private</option>
+    </select>
+  </div>
+
+  <div class="field">
+    <label>تخطى الملفات الثقيلة</label>
+    <select id="skipHeavy">
+      <option value="true">✅ نعم — تخطى node_modules / dist / build / ملفات +5MB</option>
+      <option value="false">❌ لا — ارفع كل حاجة</option>
+    </select>
+    <div class="hint">موصى به دايماً — يوفر وقت ومساحة كبيرة جداً<br>ملاحظة: ملفات .env والملفات الحساسة تُتخطى دائماً بغض النظر عن هذا الإعداد</div>
+  </div>
+
+  <div class="field">
+    <label class="checkbox-label">
+      <input type="checkbox" id="enablePages" />
+      <span>🌐 فعّل GitHub Pages بعد الرفع (نشر الموقع تلقائياً)</span>
+    </label>
+    <div class="hint">يعمل فقط لو الـ repo عام (Public) ومحتوي على index.html</div>
+  </div>
+</div>
+
+<!-- Step 3: Upload mode tabs -->
+<div class="card">
+  <div class="card-title">📦 طريقة الرفع</div>
+
+  <div class="mode-tabs">
+    <button class="mode-tab active" data-mode="zip" onclick="switchMode('zip')" type="button">🗜️ ZIP</button>
+    <button class="mode-tab" data-mode="files" onclick="switchMode('files')" type="button">📄 ملفات</button>
+    <button class="mode-tab" data-mode="folder" onclick="switchMode('folder')" type="button">📁 مجلد</button>
+  </div>
+
+  <!-- ZIP mode: each ZIP becomes its own repo -->
+  <div class="mode-panel" id="panel-zip">
+    <div class="drop-zone" id="dropZoneZip">
+      <input type="file" id="fileInputZip" accept=".zip" multiple onchange="handleZipFiles(this.files)" />
+      <div class="drop-icon">🗜️</div>
+      <div class="drop-text">اسحب ملفات ZIP هنا</div>
+      <div class="drop-sub">كل ملف ZIP = repo منفصل — يقبل أكثر من ملف</div>
+    </div>
+
+    <div class="sort-row" id="sortRow" style="display:none;">
+      <label>ترتيب:</label>
+      <select id="sortOrder" onchange="renderFiles()">
+        <option value="added">📋 ترتيب الإضافة</option>
+        <option value="name-asc">🔤 الاسم (أ-ي)</option>
+        <option value="name-desc">🔤 الاسم (ي-أ)</option>
+        <option value="size-asc">📦 الحجم (صغير-كبير)</option>
+        <option value="size-desc">📦 الحجم (كبير-صغير)</option>
+      </select>
+    </div>
+
+    <div class="files-list" id="filesList"></div>
+  </div>
+
+  <!-- Files mode: loose files go into ONE repo -->
+  <div class="mode-panel" id="panel-files" style="display:none;">
+    <div class="field">
+      <label>اسم الـ Repository</label>
+      <input type="text" id="singleRepoNameFiles" placeholder="مثال: my-project (هيُملأ تلقائياً)" />
+    </div>
+    <div class="drop-zone" id="dropZoneFiles">
+      <input type="file" id="fileInputFiles" multiple onchange="handleLooseFiles(this.files, 'files')" />
+      <div class="drop-icon">📄</div>
+      <div class="drop-text">اسحب أي ملفات هنا</div>
+      <div class="drop-sub">كل الملفات هترفع في الـ repo اللي سميته فوق</div>
+    </div>
+    <div class="files-list" id="filesListFiles"></div>
+  </div>
+
+  <!-- Folder mode: full folder structure goes into ONE repo -->
+  <div class="mode-panel" id="panel-folder" style="display:none;">
+    <div class="field">
+      <label>اسم الـ Repository</label>
+      <input type="text" id="singleRepoNameFolder" placeholder="مثال: my-project (هيُملأ تلقائياً)" />
+    </div>
+    <div class="drop-zone" id="dropZoneFolder">
+      <input type="file" id="fileInputFolder" webkitdirectory directory multiple onchange="handleLooseFiles(this.files, 'folder')" />
+      <div class="drop-icon">📁</div>
+      <div class="drop-text">اضغط لاختيار مجلد كامل</div>
+      <div class="drop-sub">هيحافظ على بنية المجلدات الداخلية بدون أي ضغط</div>
+    </div>
+    <div class="files-list" id="filesListFolder"></div>
+  </div>
+</div>
+
+
+<!-- Step 4: Upload -->
+<div class="card">
+  <div class="card-title">🚀 رفع</div>
+
+  <div class="readiness" id="readiness"></div>
+
+  <button class="btn-upload" id="uploadBtn" onclick="startUpload()" disabled type="button">
+    ارفع كل المشاريع
+  </button>
+
+  <div class="progress-wrap" id="progressWrap">
+    <div class="progress-header">
+      <span id="progressText">جاري الرفع...</span>
+      <span id="progressPct">0%</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <div class="log" id="log"></div>
+  </div>
+
+  <div class="result-links" id="resultLinks"></div>
+  <button class="btn-test" id="copyAllBtn" onclick="copyAllLinks()" type="button" style="display:none; margin-top:10px;">
+    📋 نسخ كل الروابط
+  </button>
+</div>
+
+<script>
+// ─── State ───────────────────────────────────────────────────────────────────
+let currentMode = 'zip';           // 'zip' | 'files' | 'folder'
+let selectedFiles = [];            // ZIP mode: array of File (each = own repo)
+let looseFilesData = {             // files/folder mode: one repo each
+  files:  [],                      // array of File
+  folder: []                       // array of File (has .webkitRelativePath)
+};
+
+// تذكر الـ Username بس (التوكن أبداً ما يُحفظ لأسباب أمان)
+window.addEventListener('DOMContentLoaded', () => {
+  try {
+    const saved = localStorage.getItem('gh_uploader_username');
+    if (saved) document.getElementById('username').value = saved;
+  } catch (_) {}
+  checkReady();
+});
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+
+function ghHeaders(token, extra = {}) {
+  return {
+    'Authorization': `token ${token}`,
+    'Accept': 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28',
+    ...extra
+  };
+}
+
+function log(msg, type = 'info') {
+  const el = $('log');
+  const line = document.createElement('div');
+  line.className = `log-line ${type}`;
+  line.textContent = msg;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+}
+
+function setProgress(pct, text) {
+  $('progressFill').style.width = pct + '%';
+  $('progressPct').textContent = pct + '%';
+  if (text) $('progressText').textContent = text;
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function sanitizeRepoName(name) {
+  return name
+    .replace(/\.zip$/i, '')
+    .replace(/\s+/g, '-')
+    .replace(/[^a-zA-Z0-9._-]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^[-.]|[-.]$/g, '')
+    .slice(0, 100) || 'project';
+}
+
+const HEAVY_DIRS = [
+  'node_modules/', '.git/', '__pycache__/', '.next/', 'dist/', 'build/',
+  '.venv/', 'venv/', '.idea/', '.vscode/', '.cache/', 'coverage/', '.nyc_output/'
+];
+const HEAVY_EXT = /\.(exe|dll|so|dylib|bin|iso|dmg|pkg|apk|ipa|mp4|mov|avi|mkv|mp3|wav|flac|psd|ai|sketch|fig|zip|tar|gz|rar|7z)$/i;
+const SENSITIVE_FILES = /^(\.env(\.[^/]*)?|.*\.env(\.[^/]*)?|secrets?(\.[^/]*)?|credentials?(\.[^/]*)?|\.netrc|\.npmrc|\.pypirc|\.env_.*)$/i;
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+
+function isHeavyFile(path, entry) {
+  const lower = path.toLowerCase();
+  if (HEAVY_DIRS.some(d => lower.includes(d))) return true;
+  const fileName = path.split('/').pop();
+  if (HEAVY_EXT.test(fileName)) return true;
+  if ((entry._data?.uncompressedSize ?? 0) > MAX_FILE_SIZE) return true;
+  return false;
+}
+
+function isHeavyLooseFile(path, size) {
+  const lower = path.toLowerCase();
+  if (HEAVY_DIRS.some(d => lower.includes(d))) return true;
+  const fileName = path.split('/').pop();
+  if (HEAVY_EXT.test(fileName)) return true;
+  if (size > MAX_FILE_SIZE) return true;
+  return false;
+}
+
+function isSensitiveFile(path) {
+  const fileName = path.split('/').pop();
+  return SENSITIVE_FILES.test(fileName);
+}
+
+// ─── Mode switching ──────────────────────────────────────────────────────────
+function switchMode(mode) {
+  currentMode = mode;
+  document.querySelectorAll('.mode-tab').forEach(t => t.classList.toggle('active', t.dataset.mode === mode));
+  document.querySelectorAll('.mode-panel').forEach(p => p.style.display = 'none');
+  $('panel-' + mode).style.display = 'block';
+  checkReady();
+}
+
+// ─── ZIP mode (existing behavior — each ZIP = own repo) ────────────────────
+const dropZoneZip = $('dropZoneZip');
+dropZoneZip.addEventListener('dragover', e => { e.preventDefault(); dropZoneZip.classList.add('dragover'); });
+dropZoneZip.addEventListener('dragleave', () => dropZoneZip.classList.remove('dragover'));
+dropZoneZip.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZoneZip.classList.remove('dragover');
+  handleZipFiles(e.dataTransfer.files);
+});
+
+function handleZipFiles(files) {
+  for (const f of files) {
+    if (f.name.toLowerCase().endsWith('.zip') && !selectedFiles.find(x => x.name === f.name)) {
+      selectedFiles.push(f);
+    }
+  }
+  $('sortRow').style.display = selectedFiles.length > 1 ? 'flex' : 'none';
+  renderFiles();
+  checkReady();
+}
+
+function getSortedFiles() {
+  const order = $('sortOrder')?.value || 'added';
+  const indexed = selectedFiles.map((f, i) => ({ f, i }));
+  switch (order) {
+    case 'name-asc':  indexed.sort((a, b) => a.f.name.localeCompare(b.f.name)); break;
+    case 'name-desc': indexed.sort((a, b) => b.f.name.localeCompare(a.f.name)); break;
+    case 'size-asc':  indexed.sort((a, b) => a.f.size - b.f.size); break;
+    case 'size-desc': indexed.sort((a, b) => b.f.size - a.f.size); break;
+    // 'added' = keep original order
+  }
+  return indexed;
+}
+
+function renderFiles() {
+  const list = $('filesList');
+  list.innerHTML = '';
+  getSortedFiles().forEach(({ f, i }) => {
+    const item = document.createElement('div');
+    item.className = 'file-item';
+    const size = f.size > 1024 * 1024
+      ? (f.size / 1024 / 1024).toFixed(1) + ' MB'
+      : Math.round(f.size / 1024) + ' KB';
+    item.innerHTML = `
+      <span>📦</span>
+      <span class="file-name">${f.name}</span>
+      <span class="file-size">${size}</span>
+      <button class="file-remove" onclick="removeFile(${i})" type="button">✕</button>
+    `;
+    list.appendChild(item);
+  });
+}
+
+function removeFile(i) {
+  selectedFiles.splice(i, 1);
+  $('sortRow').style.display = selectedFiles.length > 1 ? 'flex' : 'none';
+  renderFiles();
+  checkReady();
+}
+
+// ─── Files / Folder mode (loose files — go into ONE repo) ──────────────────
+const dropZoneFiles  = $('dropZoneFiles');
+const dropZoneFolder = $('dropZoneFolder');
+
+[dropZoneFiles, dropZoneFolder].forEach(zone => {
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+});
+
+dropZoneFiles.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZoneFiles.classList.remove('dragover');
+  handleLooseFiles(e.dataTransfer.files, 'files');
+});
+// Folder drop via drag isn't reliable cross-browser; rely on the input[webkitdirectory] click.
+
+function handleLooseFiles(fileList, kind) {
+  const arr = Array.from(fileList);
+  looseFilesData[kind] = arr;
+  renderLooseFiles(kind);
+  autoFillRepoName(kind, arr);
+  checkReady();
+}
+
+function autoFillRepoName(kind, files) {
+  const inputId = kind === 'files' ? 'singleRepoNameFiles' : 'singleRepoNameFolder';
+  const input = $(inputId);
+  if (input.value.trim().length > 0) return; // المستخدم كتب اسم بنفسه، لا تستبدله
+
+  let suggested = '';
+  if (kind === 'folder' && files.length > 0 && files[0].webkitRelativePath) {
+    suggested = files[0].webkitRelativePath.split('/')[0];
+  }
+  if (!suggested) {
+    const today = new Date().toISOString().slice(0, 10);
+    suggested = `project-${today}`;
+  }
+  input.value = sanitizeRepoName(suggested);
+  checkReady();
+}
+
+function renderLooseFiles(kind) {
+  const listId = kind === 'files' ? 'filesListFiles' : 'filesListFolder';
+  const list = $(listId);
+  list.innerHTML = '';
+  const files = looseFilesData[kind];
+
+  if (files.length === 0) return;
+
+  // Show a compact summary instead of every single file (could be hundreds)
+  const totalSize = files.reduce((s, f) => s + f.size, 0);
+  const sizeStr = totalSize > 1024 * 1024
+    ? (totalSize / 1024 / 1024).toFixed(1) + ' MB'
+    : Math.round(totalSize / 1024) + ' KB';
+
+  const summary = document.createElement('div');
+  summary.className = 'file-item';
+  summary.innerHTML = `
+    <span>${kind === 'folder' ? '📁' : '📄'}</span>
+    <span class="file-name">${files.length} ملف — ${sizeStr}</span>
+    <button class="file-remove" onclick="clearLooseFiles('${kind}')" type="button">✕</button>
+  `;
+  list.appendChild(summary);
+}
+
+function clearLooseFiles(kind) {
+  looseFilesData[kind] = [];
+  const inputId = kind === 'files' ? 'fileInputFiles' : 'fileInputFolder';
+  $(inputId).value = '';
+  renderLooseFiles(kind);
+  checkReady();
+}
+
+function toggleEye() {
+  const t = $('token');
+  t.type = t.type === 'password' ? 'text' : 'password';
+}
+
+function checkReady() {
+  let hasFiles = false;
+  let hasRepoName = true;
+  let repoNameLabel = '';
+
+  if (currentMode === 'zip') {
+    hasFiles = selectedFiles.length > 0;
+  } else if (currentMode === 'files') {
+    hasFiles = looseFilesData.files.length > 0;
+    repoNameLabel = $('singleRepoNameFiles').value.trim();
+    hasRepoName = repoNameLabel.length > 0;
+  } else if (currentMode === 'folder') {
+    hasFiles = looseFilesData.folder.length > 0;
+    repoNameLabel = $('singleRepoNameFolder').value.trim();
+    hasRepoName = repoNameLabel.length > 0;
+  }
+
+  const hasToken    = $('token').value.trim().length > 0;
+  const hasUsername = $('username').value.trim().length > 0;
+
+  const ok = hasFiles && hasRepoName && hasToken && hasUsername;
+  $('uploadBtn').disabled = !ok;
+
+  // Render checklist — only show items that matter, and only when not all done
+  const box = $('readiness');
+  if (ok) { box.innerHTML = ''; return; }
+
+  const items = [
+    { done: hasUsername, label: 'GitHub Username' },
+    { done: hasToken,    label: 'Personal Access Token' },
+    { done: hasFiles,    label: currentMode === 'zip' ? 'ملف ZIP واحد على الأقل' : 'اختيار الملفات/المجلد' },
+  ];
+  if (currentMode !== 'zip') {
+    items.push({ done: hasRepoName, label: 'اسم الـ Repository' });
+  }
+
+  box.innerHTML = items.map(it => `
+    <div class="readiness-item ${it.done ? 'done' : 'todo'}">
+      <span>${it.done ? '✅' : '◻️'}</span><span>${it.label}</span>
+    </div>
+  `).join('');
+}
+
+$('singleRepoNameFiles')?.addEventListener('input', checkReady);
+$('singleRepoNameFolder')?.addEventListener('input', checkReady);
+
+$('token').addEventListener('input', checkReady);
+$('username').addEventListener('input', () => {
+  checkReady();
+  try { localStorage.setItem('gh_uploader_username', $('username').value.trim()); } catch (_) {}
+});
+
+// ─── Test Token ───────────────────────────────────────────────────────────────
+async function testToken() {
+  const token    = $('token').value.trim();
+  const username = $('username').value.trim();
+  const box      = $('testResult');
+
+  const show = (msg, color, bg) => {
+    box.style.display = 'block';
+    box.style.color = color;
+    box.style.background = bg;
+    box.style.border = `1px solid ${color}30`;
+    box.textContent = msg;
+  };
+
+  if (!token) { show('✕ أدخل التوكن أولاً', '#ff4455', '#ff445510'); return; }
+
+  show('⏳ جاري الاختبار...', '#aaa', '#1e1e2e');
+
+  try {
+    const res  = await fetch('https://api.github.com/user', { headers: ghHeaders(token) });
+    const user = await res.json();
+
+    if (!res.ok) {
+      show(`✕ التوكن غلط أو منتهي: ${user.message}`, '#ff4455', '#ff445510');
+      return;
+    }
+
+    const scopes = res.headers.get('x-oauth-scopes') || '';
+    const hasRepo = scopes.includes('repo');
+
+    if (!hasRepo) {
+      show(`✕ التوكن ما عندوش صلاحية repo — الصلاحيات: "${scopes || 'لا شيء'}"`, '#ffaa00', '#ffaa0010');
+      return;
+    }
+
+    if (username && user.login.toLowerCase() !== username.toLowerCase()) {
+      show(`⚠️ التوكن لحساب "${user.login}" مش "${username}" — صحح الـ Username`, '#ffaa00', '#ffaa0010');
+      return;
+    }
+
+    show(`✅ تمام! — حساب: ${user.login} | صلاحيات: ${scopes}`, '#00ff88', '#00ff8810');
+
+  } catch (e) {
+    show(`✕ خطأ في الاتصال: ${e.message}`, '#ff4455', '#ff445510');
+  }
+}
+
+// ─── Create Repo ─────────────────────────────────────────────────────────────
+async function createRepo(token, name, isPrivate) {
+  const res = await fetch('https://api.github.com/user/repos', {
+    method: 'POST',
+    headers: ghHeaders(token, { 'Content-Type': 'application/json' }),
+    body: JSON.stringify({
+      name,
+      private: isPrivate,
+      auto_init: true,
+      description: 'Uploaded via GitHub ZIP Uploader'
+    })
+  });
+  const data = await res.json();
+  if (res.ok) return { created: true };
+  if (res.status === 422) return { created: false }; // already exists
+  const msg = data.errors?.map(e => e.message || e.code).join(', ') || data.message;
+  throw new Error(`GitHub (${res.status}): ${msg}`);
+}
+
+async function enablePages(token, username, repo) {
+  const res = await fetch(`https://api.github.com/repos/${username}/${repo}/pages`, {
+    method: 'POST',
+    headers: ghHeaders(token, { 'Content-Type': 'application/json' }),
+    body: JSON.stringify({
+      source: { branch: 'main', path: '/' }
+    })
+  });
+  if (res.ok) {
+    const data = await res.json();
+    return { enabled: true, url: data.html_url };
+  }
+  if (res.status === 409) {
+    // already enabled — fetch existing info
+    const info = await fetch(`https://api.github.com/repos/${username}/${repo}/pages`, {
+      headers: ghHeaders(token)
+    });
+    if (info.ok) {
+      const data = await info.json();
+      return { enabled: true, url: data.html_url };
+    }
+    return { enabled: true, url: `https://${username}.github.io/${repo}/` };
+  }
+  const err = await res.json();
+  throw new Error(err.message || `status ${res.status}`);
+}
+
+// ─── Upload File ─────────────────────────────────────────────────────────────
+async function uploadFile(token, username, repo, filePath, base64Content) {
+  const encodedPath = filePath.split('/').map(p => encodeURIComponent(p)).join('/');
+  const url = `https://api.github.com/repos/${username}/${repo}/contents/${encodedPath}`;
+
+  // Get SHA if file exists (for update)
+  let sha;
+  try {
+    const check = await fetch(url, { headers: ghHeaders(token) });
+    if (check.ok) sha = (await check.json()).sha;
+  } catch (_) {}
+
+  const res = await fetch(url, {
+    method: 'PUT',
+    headers: ghHeaders(token, { 'Content-Type': 'application/json' }),
+    body: JSON.stringify({
+      message: `upload: ${filePath}`,
+      content: base64Content,
+      ...(sha ? { sha } : {})
+    })
+  });
+
+  if (!res.ok) {
+    const e = await res.json();
+    throw new Error(e.message || res.status);
+  }
+}
+
+// ─── Main Upload ─────────────────────────────────────────────────────────────
+// ─── Shared: create repo + upload a list of {path, getBase64} entries ──────
+async function uploadEntriesToRepo(token, username, repoName, isPrivate, entries, enablePagesFlag) {
+  // Create repo
+  log(`  إنشاء repo...`, 'info');
+  const { created } = await createRepo(token, repoName, isPrivate);
+  log(created ? '  ✓ تم إنشاء الـ repo' : '  ⚠️ الـ repo موجود — سيُحدَّث', created ? 'ok' : 'warn');
+
+  // Wait for GitHub to initialize the repo
+  await sleep(2000);
+
+  // Upload files
+  let ok = 0, fail = 0;
+  for (let fi = 0; fi < entries.length; fi++) {
+    const { path, getBase64 } = entries[fi];
+    if (!path) continue;
+
+    try {
+      const content = await getBase64();
+      await uploadFile(token, username, repoName, path, content);
+      ok++;
+    } catch (e) {
+      log(`  ✕ ${path}: ${e.message}`, 'fail');
+      fail++;
+    }
+
+    if ((ok + fail) % 10 === 0 || fi === entries.length - 1) {
+      log(`  → ${ok + fail}/${entries.length}`, 'info');
+    }
+  }
+
+  log(fail === 0
+    ? `  ✓ تم رفع ${ok} ملف بنجاح ✅`
+    : `  ⚠️ ${ok} نجح / ${fail} فشل`, fail === 0 ? 'ok' : 'warn');
+
+  let pagesUrl = null;
+  if (enablePagesFlag) {
+    if (isPrivate) {
+      log('  ⚠️ GitHub Pages لا يعمل مع repo خاص — تخطى', 'warn');
+    } else {
+      log('  🌐 تفعيل GitHub Pages...', 'info');
+      try {
+        await sleep(1500);
+        const pages = await enablePages(token, username, repoName);
+        pagesUrl = pages.url;
+        log(`  ✓ GitHub Pages فُعّل — قد يستغرق دقيقة للظهور`, 'ok');
+      } catch (e) {
+        log(`  ⚠️ فشل تفعيل Pages: ${e.message}`, 'warn');
+      }
+    }
+  }
+
+  return {
+    name: repoName,
+    url: `https://github.com/${username}/${repoName}`,
+    pagesUrl
+  };
+}
+
+// ─── Build entries from a ZIP file ──────────────────────────────────────────
+async function buildEntriesFromZip(file, skipHeavy) {
+  const zip = await JSZip.loadAsync(file);
+  const raw = [];
+  const skipped = [];
+
+  zip.forEach((path, entry) => {
+    if (entry.dir) return;
+    if (path.startsWith('__MACOSX') || path.includes('/.')) return;
+    if (isSensitiveFile(path)) { skipped.push(`🔒 ${path}`); return; }
+    if (skipHeavy && isHeavyFile(path, entry)) { skipped.push(path); return; }
+    raw.push({ path, entry });
+  });
+
+  const sensitiveCount = skipped.filter(s => s.startsWith('🔒')).length;
+  const heavyCount = skipped.length - sensitiveCount;
+  if (sensitiveCount) log(`  🔒 تخطى ${sensitiveCount} ملف حساس (.env وغيره) — لن يُرفع أبداً`, 'warn');
+  if (heavyCount) log(`  ⚡ تخطى ${heavyCount} ملف ثقيل`, 'warn');
+
+  if (raw.length === 0) return [];
+
+  // Detect & strip a single wrapper folder
+  const firstPart = raw[0].path.split('/')[0];
+  const hasWrapper = raw.every(e => e.path.startsWith(firstPart + '/'));
+
+  return raw.map(({ path, entry }) => ({
+    path: hasWrapper ? path.slice(firstPart.length + 1) : path,
+    getBase64: () => entry.async('base64')
+  }));
+}
+
+// ─── Build entries from loose File objects (files or folder mode) ─────────
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]); // strip data: prefix
+    reader.onerror = () => reject(new Error('فشل قراءة الملف'));
+    reader.readAsDataURL(file);
+  });
+}
+
+function buildEntriesFromLooseFiles(fileArray, skipHeavy) {
+  const skipped = [];
+  const entries = [];
+
+  // If files came from a folder input, relativePath includes the root folder name — strip it
+  const hasRelPath = fileArray.length > 0 && !!fileArray[0].webkitRelativePath;
+  let rootPrefix = '';
+  if (hasRelPath) {
+    const firstRoot = fileArray[0].webkitRelativePath.split('/')[0];
+    const allShareRoot = fileArray.every(f => f.webkitRelativePath.startsWith(firstRoot + '/'));
+    if (allShareRoot) rootPrefix = firstRoot + '/';
+  }
+
+  for (const file of fileArray) {
+    const fullPath = hasRelPath ? file.webkitRelativePath : file.name;
+    const path = rootPrefix && fullPath.startsWith(rootPrefix) ? fullPath.slice(rootPrefix.length) : fullPath;
+    if (!path || path.includes('/.')) continue;
+
+    if (isSensitiveFile(path)) { skipped.push(`🔒 ${path}`); continue; }
+    if (skipHeavy && isHeavyLooseFile(path, file.size)) { skipped.push(path); continue; }
+
+    entries.push({ path, getBase64: () => fileToBase64(file) });
+  }
+
+  const sensitiveCount = skipped.filter(s => s.startsWith('🔒')).length;
+  const heavyCount = skipped.length - sensitiveCount;
+  if (sensitiveCount) log(`  🔒 تخطى ${sensitiveCount} ملف حساس (.env وغيره) — لن يُرفع أبداً`, 'warn');
+  if (heavyCount) log(`  ⚡ تخطى ${heavyCount} ملف ثقيل`, 'warn');
+
+  return entries;
+}
+
+// ─── Main Upload ─────────────────────────────────────────────────────────────
+async function startUpload() {
+  const token     = $('token').value.trim();
+  const username  = $('username').value.trim();
+  const isPrivate = $('visibility').value === 'true';
+  const skipHeavy = $('skipHeavy').value === 'true';
+  const enablePagesFlag = $('enablePages').checked;
+
+  const hasFilesToUpload =
+    (currentMode === 'zip'    && selectedFiles.length > 0) ||
+    (currentMode === 'files'  && looseFilesData.files.length > 0) ||
+    (currentMode === 'folder' && looseFilesData.folder.length > 0);
+
+  if (!token || !username || !hasFilesToUpload) return;
+
+  $('uploadBtn').disabled = true;
+  $('progressWrap').style.display = 'block';
+  $('resultLinks').innerHTML = '';
+  $('copyAllBtn').style.display = 'none';
+  $('log').innerHTML = '';
+  setProgress(0, 'جاري التحضير...');
+
+  // 1. Verify token
+  log('🔑 التحقق من التوكن...', 'info');
+  try {
+    const res  = await fetch('https://api.github.com/user', { headers: ghHeaders(token) });
+    const user = await res.json();
+
+    if (!res.ok) {
+      log(`✕ التوكن غلط: ${user.message}`, 'fail');
+      log('→ أنشئ Classic Token بصلاحية repo من github.com/settings/tokens', 'warn');
+      $('uploadBtn').disabled = false;
+      return;
+    }
+
+    if (user.login.toLowerCase() !== username.toLowerCase()) {
+      log(`✕ Username غلط — التوكن لحساب: ${user.login}`, 'fail');
+      $('uploadBtn').disabled = false;
+      return;
+    }
+
+    log(`✓ مرحباً ${user.login} ✅`, 'ok');
+  } catch (e) {
+    log(`✕ خطأ في الاتصال: ${e.message}`, 'fail');
+    $('uploadBtn').disabled = false;
+    return;
+  }
+
+  const successLinks = [];
+
+  if (currentMode === 'zip') {
+    // 2a. Each ZIP becomes its own repo
+    const total = selectedFiles.length;
+
+    for (let i = 0; i < total; i++) {
+      const file = selectedFiles[i];
+      const repoName = sanitizeRepoName(file.name);
+      const pct = Math.round((i / total) * 90);
+      setProgress(pct, `(${i + 1}/${total}) ${repoName}`);
+
+      log('', 'sep');
+      log(`📦 ${file.name}  →  repo: ${repoName}`, 'info');
+
+      try {
+        log('  فك الضغط...', 'info');
+        const entries = await buildEntriesFromZip(file, skipHeavy);
+        log(`  ${entries.length} ملف للرفع`, 'info');
+
+        if (entries.length === 0) {
+          log('  ⚠️ لا توجد ملفات — تخطى', 'warn');
+          continue;
+        }
+
+        const result = await uploadEntriesToRepo(token, username, repoName, isPrivate, entries, enablePagesFlag);
+        successLinks.push(result);
+      } catch (e) {
+        log(`  ✕ خطأ: ${e.message}`, 'fail');
+      }
+    }
+
+    setProgress(100, `اكتمل — ${successLinks.length}/${total} مشروع ✅`);
+
+  } else {
+    // 2b. files / folder mode — everything goes into ONE repo
+    const kind = currentMode; // 'files' | 'folder'
+    const rawFiles = looseFilesData[kind];
+    const repoNameInput = kind === 'files' ? $('singleRepoNameFiles').value : $('singleRepoNameFolder').value;
+    const repoName = sanitizeRepoName(repoNameInput);
+
+    setProgress(10, `معالجة ${repoName}...`);
+    log('', 'sep');
+    log(`${kind === 'folder' ? '📁' : '📄'} ${rawFiles.length} ملف  →  repo: ${repoName}`, 'info');
+
+    try {
+      const entries = buildEntriesFromLooseFiles(rawFiles, skipHeavy);
+      log(`  ${entries.length} ملف للرفع`, 'info');
+
+      if (entries.length === 0) {
+        log('  ⚠️ لا توجد ملفات صالحة للرفع', 'warn');
+      } else {
+        setProgress(30, `رفع ${repoName}...`);
+        const result = await uploadEntriesToRepo(token, username, repoName, isPrivate, entries, enablePagesFlag);
+        successLinks.push(result);
+      }
+    } catch (e) {
+      log(`  ✕ خطأ: ${e.message}`, 'fail');
+    }
+
+    setProgress(100, `اكتمل ✅`);
+  }
+
+  // Done
+  log('', 'sep');
+  log(`✅ انتهى! ${successLinks.length} مشروع تم رفعه`, 'ok');
+
+  // Result links
+  const linksDiv = $('resultLinks');
+  successLinks.forEach(({ name, url, pagesUrl }) => {
+    const a = document.createElement('a');
+    a.className = 'result-link';
+    a.href = url;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    a.innerHTML = `<span>⚡ ${name}</span><span>↗</span>`;
+    linksDiv.appendChild(a);
+
+    if (pagesUrl) {
+      const p = document.createElement('a');
+      p.className = 'result-link';
+      p.href = pagesUrl;
+      p.target = '_blank';
+      p.rel = 'noopener noreferrer';
+      p.innerHTML = `<span>🌐 ${name} (live)</span><span>↗</span>`;
+      linksDiv.appendChild(p);
+    }
+  });
+
+  lastSuccessLinks = successLinks;
+  $('copyAllBtn').style.display = successLinks.length > 0 ? 'block' : 'none';
+
+  $('uploadBtn').disabled = false;
+}
+
+let lastSuccessLinks = [];
+
+async function copyAllLinks() {
+  const lines = [];
+  lastSuccessLinks.forEach(({ name, url, pagesUrl }) => {
+    lines.push(`${name}: ${url}`);
+    if (pagesUrl) lines.push(`  → live: ${pagesUrl}`);
+  });
+  const text = lines.join('\n');
+  const btn = $('copyAllBtn');
+  try {
+    await navigator.clipboard.writeText(text);
+    const original = btn.textContent;
+    btn.textContent = '✅ تم النسخ!';
+    setTimeout(() => { btn.textContent = original; }, 2000);
+  } catch (e) {
+    btn.textContent = '✕ فشل النسخ — جرب يدوياً';
+  }
+}
+</script>
+</body>
+</html>
